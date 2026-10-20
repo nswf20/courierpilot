@@ -1,0 +1,12 @@
+{
+  "name": "CourierPilot",
+  "short_name": "CourierPilot",
+  "description": "Suivi des courses, cotisations, virements Avalon et dépenses",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1520",
+  "theme_color": "#13283b",
+  "lang": "fr",
+  "icons": []
+}
