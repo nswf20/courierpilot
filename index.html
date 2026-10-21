@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#13283b">
 <title>CourierPilot</title>
 <style>
-:root{--bg:#0b1520;--panel:#13283b;--text:#f3f7fb;--muted:#a8bac9;--line:#294357;--green:#72e0b2;--red:#ff8b8b}
+:root{--bg:#0b1520;--panel:#13283b;--text:#f3f7fb;--muted:#a8bac9;--line:#294357;--green:#72e0b2;--red:#ff8b8b;--gold:#f5c16c}
 *{box-sizing:border-box}
 body{margin:0;background:linear-gradient(160deg,#0b1520,#102538 60%,#0b1520);color:var(--text);font:16px system-ui,sans-serif}
 .wrap{max-width:960px;margin:auto;padding:18px 12px 36px}
@@ -23,7 +23,7 @@ input,select{width:100%;background:#0c1b29;color:var(--text);border:1px solid #3
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
 .row:last-child{border-bottom:0}
 .big{font-size:23px;font-weight:750}
-.green{color:var(--green)}.red{color:var(--red)}
+.green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}
 .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 button{border:0;border-radius:10px;padding:11px 12px;font-weight:700;background:var(--green);color:#092019;cursor:pointer}
 button.secondary{background:#29465c;color:white}
@@ -32,13 +32,22 @@ button.danger{background:#4b2931;color:#ffd9d9;padding:8px 10px;font-size:12px}
 .empty{color:var(--muted);font-size:12px;padding:8px 0}
 .status{padding:10px;border-radius:10px;background:#0c1b29;color:var(--muted);font-size:13px;line-height:1.4;margin-top:10px}
 .hidden{display:none!important}
-.fin-table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0 18px}
-.fin-table th,.fin-table td{padding:10px 6px;border-bottom:1px solid var(--line);text-align:left}
-.fin-table th:last-child,.fin-table td:last-child{text-align:right;font-variant-numeric:tabular-nums}
-.fin-table th{font-size:12px;color:var(--muted)}
-.fin-table .total td{font-weight:750}
 button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
-@media(max-width:520px){.grid,.fields{grid-template-columns:1fr}.wide{grid-column:auto}.big{font-size:21px}.fin-table{font-size:12px}.fin-table th,.fin-table td{padding:9px 3px}}
+.dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.hero{grid-column:1/-1;background:#0c1b29;border:1px solid var(--line);border-radius:16px;padding:18px}
+.hero-label,.tile-label{display:block;font-size:12px;color:var(--muted);font-weight:650}
+.hero strong{display:block;color:var(--green);font-size:32px;line-height:1.3;margin:8px 0;overflow-wrap:anywhere}
+.tile{background:#0c1b29;border:1px solid var(--line);border-radius:15px;padding:13px;min-width:0;min-height:120px;display:flex;flex-direction:column;justify-content:space-between;gap:12px}
+.tile strong{font-size:21px;line-height:1.25;overflow-wrap:anywhere}
+.tile small,.hero small{font-size:11px;color:var(--muted)}
+.section-title{margin:22px 0 8px}
+.fin-table{width:100%;border-collapse:collapse;font-size:13px}
+.fin-table th,.fin-table td{padding:11px 5px;border-bottom:1px solid var(--line);text-align:left}
+.fin-table th:last-child,.fin-table td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.fin-table th{font-size:11px;color:var(--muted)}
+.fin-table .total td{font-weight:750}
+@media(min-width:650px){.dashboard{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{grid-column:1/-1}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.grid,.fields{grid-template-columns:1fr}.wide{grid-column:auto}.big{font-size:21px}.tile strong{font-size:19px}.hero strong{font-size:29px}}
 </style>
 </head>
 <body>
@@ -62,36 +71,44 @@ button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
 <section class="card"><span class="sub">Net estimé cette semaine</span><div class="big green" id="weekNet">0,00 zł</div></section>
 
 <section class="card wide">
-<h2>💰 Bilan financier</h2>
-<p class="note">Les gains sont classés par date de travail. Chaque encaissement Glovo et chaque virement Avalon peut être rattaché à une semaine de travail. Un encaissement n'est jamais ajouté une deuxième fois aux gains.</p>
-<h2>Cette semaine de travail</h2>
-<table class="fin-table">
-<thead><tr><th>Élément</th><th>Montant</th></tr></thead>
-<tbody>
-<tr><td>Gains bruts des courses</td><td id="financeWeekGross">0,00 zł</td></tr>
-<tr><td>Cotisations + Avalon estimées</td><td class="red" id="financeWeekTax">− 0,00 zł</td></tr>
-<tr class="total"><td>Net estimé</td><td class="green" id="financeWeekNet">0,00 zł</td></tr>
-<tr><td>Dépenses datées cette semaine</td><td class="red" id="financeWeekExpenses">− 0,00 zł</td></tr>
-<tr class="total"><td>Net après dépenses</td><td class="green" id="financeWeekAfterExpenses">0,00 zł</td></tr>
-<tr><td>Encaissements Glovo affectés à cette semaine</td><td id="financeWeekWallet">0,00 zł</td></tr>
-<tr><td>Virements Avalon affectés à cette semaine</td><td id="financeWeekPayouts">0,00 zł</td></tr>
-<tr class="total"><td>Net estimé moins encaissements Glovo</td><td id="financeWeekWalletGap">0,00 zł</td></tr>
-</tbody></table>
-<h2>Ce mois-ci</h2>
-<table class="fin-table"><tbody>
+<h2>💰 Tableau de bord financier</h2>
+<p class="note">Les gains correspondent aux courses enregistrées. Les encaissements Glovo et virements Avalon sont suivis séparément et associés à la semaine de travail qu'ils règlent.</p>
+
+<h2 class="section-title">Cette semaine de travail</h2>
+<div class="dashboard">
+<div class="hero">
+<span class="hero-label">NET ESTIMÉ CETTE SEMAINE</span>
+<strong id="financeWeekNet">0,00 zł</strong>
+<small>Après cotisations estimées, avant dépenses</small>
+</div>
+<div class="tile"><span class="tile-label">Gains bruts</span><strong id="financeWeekGross">0,00 zł</strong><small>Courses de la semaine</small></div>
+<div class="tile"><span class="tile-label">Cotisations estimées</span><strong class="red" id="financeWeekTax">− 0,00 zł</strong><small>Cotisations + frais Avalon</small></div>
+<div class="tile"><span class="tile-label">Glovo encaissé</span><strong id="financeWeekWallet">0,00 zł</strong><small>Pour cette semaine de travail</small></div>
+<div class="tile"><span class="tile-label">Reste estimé à encaisser</span><strong class="gold" id="financeWeekWalletGap">0,00 zł</strong><small>Net moins encaissements Glovo</small></div>
+<div class="tile"><span class="tile-label">Dépenses</span><strong class="red" id="financeWeekExpenses">0,00 zł</strong><small>Dépenses datées cette semaine</small></div>
+<div class="tile"><span class="tile-label">Net après dépenses</span><strong class="green" id="financeWeekAfterExpenses">0,00 zł</strong><small>Estimation</small></div>
+</div>
+
+<h2 class="section-title">🏦 Virements Avalon</h2>
+<div class="row"><span>Virements reçus pour cette semaine de travail</span><b id="financeWeekPayouts">0,00 zł</b></div>
+<p class="note">Le virement est associé à la semaine de travail qu'il rémunère, indépendamment de la date à laquelle l'argent arrive sur le compte.</p>
+
+<h2 class="section-title">📅 Ce mois-ci</h2>
+<table class="fin-table"><thead><tr><th>Élément</th><th>Montant</th></tr></thead><tbody>
 <tr><td>Gains bruts</td><td id="financeMonthGross">0,00 zł</td></tr>
 <tr><td>Net estimé</td><td class="green" id="financeMonthNet">0,00 zł</td></tr>
 <tr><td>Dépenses</td><td class="red" id="financeMonthExpenses">0,00 zł</td></tr>
-<tr><td>Encaissements Glovo affectés au mois</td><td id="financeMonthWallet">0,00 zł</td></tr>
-<tr><td>Virements Avalon affectés au mois</td><td id="financeMonthPayouts">0,00 zł</td></tr>
+<tr><td>Encaissements Glovo associés au mois</td><td id="financeMonthWallet">0,00 zł</td></tr>
+<tr><td>Virements Avalon associés au mois de travail</td><td id="financeMonthPayouts">0,00 zł</td></tr>
 </tbody></table>
-<h2>Depuis le début de l'historique</h2>
+
+<h2 class="section-title">📊 Depuis le début</h2>
 <table class="fin-table"><tbody>
 <tr><td>Gain net estimé cumulé</td><td class="green" id="financeAllNet">0,00 zł</td></tr>
 <tr><td>Total des dépenses</td><td class="red" id="financeAllExpenses">0,00 zł</td></tr>
 <tr><td>Net après dépenses</td><td id="financeAllAfterExpenses">0,00 zł</td></tr>
 <tr><td>Total encaissé du portefeuille Glovo</td><td id="financeAllWallet">0,00 zł</td></tr>
-<tr><td>Total des virements Avalon</td><td id="financeAllPayouts">0,00 zł</td></tr>
+<tr><td>Total des virements Avalon reçus</td><td id="financeAllPayouts">0,00 zł</td></tr>
 </tbody></table>
 </section>
 
@@ -111,7 +128,7 @@ button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
 
 <section class="card wide">
 <h2>💵 TTC argent collecté auprès des clients</h2>
-<p class="note">Suivi séparé des gains et du portefeuille Glovo.</p>
+<p class="note">Suivi séparé des gains et du portefeuille.</p>
 <label>Date de collecte</label><input id="collectDate" type="date">
 <div class="fields">
 <div><label>Montant demandé (zł)</label><input id="collectDue" type="number" min="0" step=".01" placeholder="60"></div>
@@ -122,16 +139,16 @@ button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
 <label>Voir le total du jour</label><input id="collectViewDate" type="date">
 <div class="row"><span>Total demandé ce jour</span><b id="collectDayDue">0,00 zł</b></div>
 <div class="row"><span>Total réellement reçu ce jour</span><b id="collectDayReceived">0,00 zł</b></div>
-<div class="row"><span>TTC réellement collecté ce jour</span><b class="green" id="collectAll">0,00 zł</b></div>
+<div class="row"><span><b>TTC réellement collecté ce jour</b></span><b class="green" id="collectAll">0,00 zł</b></div>
 <div class="row"><span>Total reçu sur tout l'historique</span><b id="collectGrandTotal">0,00 zł</b></div>
 <div id="collectHistory" class="history"></div>
 </section>
 
 <section class="card wide">
 <h2>👛 Encaissement du portefeuille Glovo</h2>
-<p class="note">Enregistre l'argent encaissé et indique la semaine de travail que cet encaissement règle.</p>
+<p class="note">Saisis la date de l'encaissement et la semaine de travail à laquelle il correspond.</p>
 <label>Date de l'encaissement</label><input id="walletDate" type="date">
-<label>Montant encaissé (zł)</label><input id="walletAmount" type="number" min="0" step=".01">
+<label>Montant encaissé (zł)</label><input id="walletAmount" type="number" min="0" step=".01" placeholder="200">
 <label>Semaine de travail concernée (choisir le lundi)</label><input id="walletWorkWeek" type="date">
 <div class="btns"><button id="addWallet">Enregistrer l'encaissement</button></div>
 <label>Voir le total du jour</label><input id="walletViewDate" type="date">
@@ -151,7 +168,7 @@ button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
 <div><label>Taux de prélèvements (%)</label><input id="taxRate" type="number" min="0" max="100" step=".01" value="28.38"></div>
 <div><label>Frais Avalon supplémentaires (%)</label><input id="avalonRate" type="number" min="0" max="100" step=".01" value="0"></div>
 </div>
-<p class="note">Le taux de 28,38 % est une estimation paramétrable, pas une confirmation de tes cotisations réelles.</p>
+<p class="note">Le taux de 28,38 % est une estimation paramétrable. Vérifie-le selon tes prélèvements réels.</p>
 </section>
 
 <section class="card">
@@ -160,7 +177,7 @@ button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
 <label>Montant net reçu (zł)</label><input id="payoutAmount" type="number" min="0" step=".01">
 <label>Semaine de travail rémunérée (choisir le lundi)</label><input id="payoutWorkWeek" type="date">
 <div class="btns"><button id="addPayout">Enregistrer le virement</button></div>
-<p class="note">La date de réception et la semaine de travail payée sont conservées séparément.</p>
+<p class="note">La date de réception et la semaine de travail payée sont enregistrées séparément.</p>
 </section>
 
 <section class="card">
@@ -197,7 +214,6 @@ let state={courses:[],payouts:[],expenses:[],collects:[],wallet:[]};
 let tab='day',signedIn=false,syncing=false,pollingRemote=false,remoteRowIds=[SHARED_ID];
 try{state={...state,...JSON.parse(localStorage.getItem('cpdata')||'{}')}}catch(e){alert("Les données locales n'ont pas pu être lues. Ne clique pas sur Effacer les données.");}
 ['courses','payouts','expenses','collects','wallet'].forEach(k=>{if(!Array.isArray(state[k]))state[k]=[]});
-
 const v=id=>Math.max(0,Number($(id).value)||0);
 const tax=()=>Math.min(100,v('taxRate'))/100;
 const av=()=>Math.min(100,v('avalonRate'))/100;
@@ -327,10 +343,7 @@ function persist(){
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function dateValue(id){return $(id).value||today()}
 function dateMonth(d){return String(d||'').slice(0,7)}
-function weekMatches(record,weekField,start){
- const assigned=record[weekField]||weekStart(record.date);
- return assigned===start;
-}
+function assignedWeek(record){return record.workWeek||weekStart(record.date)}
 function render(){
  const t=today(),w=weekStart(t),month=t.slice(0,7);
  const day=state.courses.filter(c=>c.date===t);
@@ -342,10 +355,10 @@ function render(){
  const net=arr=>gross(arr)*(1-tax()-av());
  const weekExpenses=state.expenses.filter(e=>e.date&&weekStart(e.date)===w);
  const monthExpenses=state.expenses.filter(e=>dateMonth(e.date)===month);
- const weekWallet=state.wallet.filter(e=>weekMatches(e,'workWeek',w));
- const monthWallet=state.wallet.filter(e=>dateMonth(e.date)===month);
- const weekPayouts=state.payouts.filter(p=>weekMatches(p,'workWeek',w));
- const monthPayouts=state.payouts.filter(p=>dateMonth(p.date)===month);
+ const weekWallet=state.wallet.filter(e=>assignedWeek(e)===w);
+ const monthWallet=state.wallet.filter(e=>dateMonth(assignedWeek(e))===month);
+ const weekPayouts=state.payouts.filter(p=>assignedWeek(p)===w);
+ const monthPayouts=state.payouts.filter(p=>dateMonth(assignedWeek(p))===month);
 
  $('todayGross').textContent=money(gross(day));
  $('todayNet').textContent=money(net(day));
@@ -353,11 +366,10 @@ function render(){
  $('weekGross').textContent=money(gross(week));
  $('weekNet').textContent=money(net(week));
  $('weekCount').textContent=week.length+' course(s)';
-
  $('periodCount').textContent=all.length;
- $('periodGross').textContent=money(gross(all));
- $('periodTax').textContent='− '+money(gross(all)*(tax()+av()));
- $('periodNet').textContent=money(net(all));
+ $('periodGross').textContent=money(g);
+ $('periodTax').textContent='− '+money(ded);
+ $('periodNet').textContent=money(g-ded);
 
  const cg=v('courseAmount')+v('tip');
  $('courseGross').textContent=money(cg);
@@ -381,7 +393,7 @@ function render(){
  $('financeWeekAfterExpenses').textContent=money(net(week)-sum(weekExpenses));
  $('financeWeekWallet').textContent=money(sum(weekWallet));
  $('financeWeekPayouts').textContent=money(sum(weekPayouts));
- $('financeWeekWalletGap').textContent=money(net(week)-sum(weekWallet));
+ $('financeWeekWalletGap').textContent=money(Math.max(0,net(week)-sum(weekWallet)));
 
  $('financeMonthGross').textContent=money(gross(monthCourses));
  $('financeMonthNet').textContent=money(net(monthCourses));
@@ -399,19 +411,18 @@ function render(){
  $('collectHistory').innerHTML=cr.length?cr.map(c=>`<div class="row"><span><b>${esc(c.date)}</b><br>Demandé : ${money(c.due)} · Reçu : ${money(c.received)}<br>Écart : ${money(Math.max(0,Number(c.due||0)-Number(c.received||0)))}</span><button class="danger" data-delete-kind="collect" data-delete-index="${c._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucune collecte enregistrée.</div>';
 
  const wr=state.wallet.map((e,i)=>({...e,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
- $('walletHistory').innerHTML=wr.length?wr.map(e=>`<div class="row"><span><b>${esc(e.date)}</b><br>Encaissement : ${money(e.amount)}<br>Semaine de travail : ${esc(e.workWeek||weekStart(e.date)||'Non précisée')}</span><button class="danger" data-delete-kind="wallet" data-delete-index="${e._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucun encaissement enregistré.</div>';
+ $('walletHistory').innerHTML=wr.length?wr.map(e=>`<div class="row"><span><b>${esc(e.date)}</b><br>Encaissement : ${money(e.amount)}<br>Semaine de travail : ${esc(assignedWeek(e)||'Non précisée')}</span><button class="danger" data-delete-kind="wallet" data-delete-index="${e._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucun encaissement enregistré.</div>';
 
  const items=[
  ...state.courses.map((c,i)=>({date:c.date,title:'Course · '+c.platform,detail:'Brut '+money(Number(c.amount||0)+Number(c.tip||0)),amount:Number(c.amount||0)+Number(c.tip||0),kind:'course',index:i})),
- ...state.payouts.map((p,i)=>({date:p.date,title:'Virement Avalon',detail:'Reçu '+money(p.amount)+' · semaine travaillée '+(p.workWeek||weekStart(p.date)||'non précisée'),amount:Number(p.amount||0),kind:'payout',index:i})),
+ ...state.payouts.map((p,i)=>({date:p.date,title:'Virement Avalon',detail:'Reçu le '+p.date+' · semaine travaillée '+assignedWeek(p),amount:Number(p.amount||0),kind:'payout',index:i})),
  ...state.expenses.map((e,i)=>({date:e.date,title:'Dépense · '+e.type,detail:'Dépense',amount:-Number(e.amount||0),kind:'expense',index:i})),
  ...state.collects.map((c,i)=>({date:c.date,title:'Collecte client',detail:'Demandé '+money(c.due)+' · reçu '+money(c.received),amount:0,kind:'collect',index:i})),
- ...state.wallet.map((e,i)=>({date:e.date,title:'Encaissement portefeuille Glovo',detail:'Montant '+money(e.amount)+' · semaine travaillée '+(e.workWeek||weekStart(e.date)||'non précisée'),amount:0,kind:'wallet',index:i}))
+ ...state.wallet.map((e,i)=>({date:e.date,title:'Encaissement portefeuille Glovo',detail:'Montant '+money(e.amount)+' · semaine travaillée '+assignedWeek(e),amount:0,kind:'wallet',index:i}))
  ].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
  $('history').innerHTML=items.length?items.map(x=>`<div class="row"><span><b>${esc(x.title)}</b><br>${esc(x.date)} · ${esc(x.detail)}</span><span style="text-align:right"><b class="${x.amount<0?'red':''}">${x.amount<0?'− ':''}${money(Math.abs(x.amount))}</b><br><button class="danger" data-delete-kind="${x.kind}" data-delete-index="${x.index}">Supprimer</button></span></div>`).join(''):'<div class="empty">Aucune opération pour le moment.</div>';
  $('collectGap').textContent=money(Math.max(0,v('collectDue')-v('collectReceived')));
 }
-
 $('addCourse').onclick=()=>{
  const amount=v('courseAmount'),tip=v('tip');
  if(amount+tip<=0)return alert('Saisis un montant de course.');
@@ -429,14 +440,14 @@ $('addWallet').onclick=()=>{
  const amount=v('walletAmount');
  if(amount<=0)return alert('Saisis le montant encaissé.');
  const workWeek=weekStart(dateValue('walletWorkWeek')||dateValue('walletDate'));
- state.wallet.push({date:dateValue('walletDate'),amount,workWeek});
+ state.wallet.push({date:dateValue('walletDate'),workWeek,amount});
  persist();$('walletAmount').value='';
 };
 $('addPayout').onclick=()=>{
  const amount=v('payoutAmount');
  if(amount<=0)return alert('Saisis le montant net reçu.');
  const workWeek=weekStart(dateValue('payoutWorkWeek')||dateValue('payoutDate'));
- state.payouts.push({date:dateValue('payoutDate'),amount,workWeek});
+ state.payouts.push({date:dateValue('payoutDate'),workWeek,amount});
  persist();$('payoutAmount').value='';
 };
 $('addExpense').onclick=()=>{
@@ -445,10 +456,10 @@ $('addExpense').onclick=()=>{
  state.expenses.push({date:dateValue('expenseDate'),type:$('expenseType').value,amount});
  persist();$('expenseAmount').value='';
 };
-
 function deleteOperation(kind,index){
  if(READ_ONLY)return;
- const map={course:'courses',payout:'payouts',expense:'expenses',collect:'collects',wallet:'wallet'},key=map[kind];
+ const map={course:'courses',payout:'payouts',expense:'expenses',collect:'collects',wallet:'wallet'};
+ const key=map[kind];
  if(!key||!state[key][index])return;
  if(!confirm('Supprimer cette opération ?'))return;
  state[key].splice(index,1);persist();
