@@ -1,203 +1,3 @@
-<!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#13283b">
-<title>CourierPilot</title>
-<style>
-:root{--bg:#0b1520;--panel:#13283b;--text:#f3f7fb;--muted:#a8bac9;--line:#294357;--green:#72e0b2;--red:#ff8b8b;--gold:#f5c16c}
-*{box-sizing:border-box}
-body{margin:0;background:linear-gradient(160deg,#0b1520,#102538 60%,#0b1520);color:var(--text);font:16px system-ui,sans-serif}
-.wrap{max-width:960px;margin:auto;padding:18px 12px 36px}
-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.logo{width:48px;height:48px;border-radius:15px;background:#203f54;display:grid;place-items:center;font-size:26px;color:var(--green)}
-h1{font-size:24px;margin:0}h2{font-size:16px;margin:0 0 12px}
-.sub,.note{color:var(--muted);font-size:12px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:14px;min-width:0}
-.wide{grid-column:1/-1}
-label{display:block;font-size:12px;color:var(--muted);margin:9px 0 5px}
-input,select{width:100%;background:#0c1b29;color:var(--text);border:1px solid #36536a;border-radius:10px;padding:10px;font:inherit;min-width:0}
-.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:0}
-.big{font-size:23px;font-weight:750}
-.green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}
-.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-button{border:0;border-radius:10px;padding:11px 12px;font-weight:700;background:var(--green);color:#092019;cursor:pointer}
-button.secondary{background:#29465c;color:white}
-button.danger{background:#4b2931;color:#ffd9d9;padding:8px 10px;font-size:12px}
-.note{line-height:1.5}.history{font-size:12px;overflow-wrap:anywhere}
-.empty{color:var(--muted);font-size:12px;padding:8px 0}
-.status{padding:10px;border-radius:10px;background:#0c1b29;color:var(--muted);font-size:13px;line-height:1.4;margin-top:10px}
-.hidden{display:none!important}
-button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
-.dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.hero{grid-column:1/-1;background:#0c1b29;border:1px solid var(--line);border-radius:16px;padding:18px}
-.hero-label,.tile-label{display:block;font-size:12px;color:var(--muted);font-weight:650}
-.hero strong{display:block;color:var(--green);font-size:32px;line-height:1.3;margin:8px 0;overflow-wrap:anywhere}
-.tile{background:#0c1b29;border:1px solid var(--line);border-radius:15px;padding:13px;min-width:0;min-height:120px;display:flex;flex-direction:column;justify-content:space-between;gap:12px}
-.tile strong{font-size:21px;line-height:1.25;overflow-wrap:anywhere}
-.tile small,.hero small{font-size:11px;color:var(--muted)}
-.section-title{margin:22px 0 8px}
-.fin-table{width:100%;border-collapse:collapse;font-size:13px}
-.fin-table th,.fin-table td{padding:11px 5px;border-bottom:1px solid var(--line);text-align:left}
-.fin-table th:last-child,.fin-table td:last-child{text-align:right;font-variant-numeric:tabular-nums}
-.fin-table th{font-size:11px;color:var(--muted)}
-.fin-table .total td{font-weight:750}
-@media(min-width:650px){.dashboard{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{grid-column:1/-1}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:520px){.grid,.fields{grid-template-columns:1fr}.wide{grid-column:auto}.big{font-size:21px}.tile strong{font-size:19px}.hero strong{font-size:29px}}
-</style>
-</head>
-<body>
-<main class="wrap">
-<header><div class="logo">↗</div><div><h1>CourierPilot</h1><div class="sub">Courses · cotisations · Avalon · Glovo · PLN</div></div></header>
-
-<section class="card wide" id="authCard">
-<h2>🔐 Synchronisation</h2>
-<p class="note">Connecte-toi avec le compte partagé pour synchroniser les données.</p>
-<label>E-mail</label><input id="authEmail" type="email" autocomplete="username">
-<label>Mot de passe</label><input id="authPassword" type="password" autocomplete="current-password">
-<div class="btns"><button id="signIn">Se connecter</button><button id="signOut" class="secondary hidden">Se déconnecter</button></div>
-<div id="syncStatus" class="status">Les données locales sont conservées. Connecte-toi pour synchroniser.</div>
-<p id="readOnlyNote" class="note hidden">Mode consultation : aucune modification ne sera envoyée depuis ce téléphone.</p>
-</section>
-
-<div class="grid">
-<section class="card"><span class="sub">Brut aujourd'hui</span><div class="big" id="todayGross">0,00 zł</div><div class="sub" id="todayCount">0 course</div></section>
-<section class="card"><span class="sub">Net estimé aujourd'hui</span><div class="big green" id="todayNet">0,00 zł</div></section>
-<section class="card"><span class="sub">Brut cette semaine</span><div class="big" id="weekGross">0,00 zł</div><div class="sub" id="weekCount">0 course</div></section>
-<section class="card"><span class="sub">Net estimé cette semaine</span><div class="big green" id="weekNet">0,00 zł</div></section>
-
-<section class="card wide">
-<h2>💰 Tableau de bord financier</h2>
-<p class="note">Les gains correspondent aux courses enregistrées. Les encaissements Glovo et virements Avalon sont suivis séparément et associés à la semaine de travail qu'ils règlent.</p>
-
-<h2 class="section-title">Cette semaine de travail</h2>
-<div class="dashboard">
-<div class="hero">
-<span class="hero-label">NET ESTIMÉ CETTE SEMAINE</span>
-<strong id="financeWeekNet">0,00 zł</strong>
-<small>Après cotisations estimées, avant dépenses</small>
-</div>
-<div class="tile"><span class="tile-label">Gains bruts</span><strong id="financeWeekGross">0,00 zł</strong><small>Courses de la semaine</small></div>
-<div class="tile"><span class="tile-label">Cotisations estimées</span><strong class="red" id="financeWeekTax">− 0,00 zł</strong><small>Cotisations + frais Avalon</small></div>
-<div class="tile"><span class="tile-label">Glovo encaissé</span><strong id="financeWeekWallet">0,00 zł</strong><small>Pour cette semaine de travail</small></div>
-<div class="tile"><span class="tile-label">Reste estimé à encaisser</span><strong class="gold" id="financeWeekWalletGap">0,00 zł</strong><small>Net moins encaissements Glovo</small></div>
-<div class="tile"><span class="tile-label">Dépenses</span><strong class="red" id="financeWeekExpenses">0,00 zł</strong><small>Dépenses datées cette semaine</small></div>
-<div class="tile"><span class="tile-label">Net après dépenses</span><strong class="green" id="financeWeekAfterExpenses">0,00 zł</strong><small>Estimation</small></div>
-</div>
-
-<h2 class="section-title">🏦 Virements Avalon</h2>
-<div class="row"><span>Virements reçus pour cette semaine de travail</span><b id="financeWeekPayouts">0,00 zł</b></div>
-<p class="note">Le virement est associé à la semaine de travail qu'il rémunère, indépendamment de la date à laquelle l'argent arrive sur le compte.</p>
-
-<h2 class="section-title">📅 Ce mois-ci</h2>
-<table class="fin-table"><thead><tr><th>Élément</th><th>Montant</th></tr></thead><tbody>
-<tr><td>Gains bruts</td><td id="financeMonthGross">0,00 zł</td></tr>
-<tr><td>Net estimé</td><td class="green" id="financeMonthNet">0,00 zł</td></tr>
-<tr><td>Dépenses</td><td class="red" id="financeMonthExpenses">0,00 zł</td></tr>
-<tr><td>Encaissements Glovo associés au mois</td><td id="financeMonthWallet">0,00 zł</td></tr>
-<tr><td>Virements Avalon associés au mois de travail</td><td id="financeMonthPayouts">0,00 zł</td></tr>
-</tbody></table>
-
-<h2 class="section-title">📊 Depuis le début</h2>
-<table class="fin-table"><tbody>
-<tr><td>Gain net estimé cumulé</td><td class="green" id="financeAllNet">0,00 zł</td></tr>
-<tr><td>Total des dépenses</td><td class="red" id="financeAllExpenses">0,00 zł</td></tr>
-<tr><td>Net après dépenses</td><td id="financeAllAfterExpenses">0,00 zł</td></tr>
-<tr><td>Total encaissé du portefeuille Glovo</td><td id="financeAllWallet">0,00 zł</td></tr>
-<tr><td>Total des virements Avalon reçus</td><td id="financeAllPayouts">0,00 zł</td></tr>
-</tbody></table>
-</section>
-
-<section class="card wide">
-<h2>➕ Ajouter une course</h2>
-<div class="fields">
-<div><label>Date de travail</label><input id="courseDate" type="date"></div>
-<div><label>Plateforme</label><select id="platform"><option>Glovo</option><option>Wolt</option><option>Pyszne</option><option>Bolt Food</option><option>Autre</option></select></div>
-<div><label>Montant de la course (zł)</label><input id="courseAmount" type="number" min="0" step=".01"></div>
-<div><label>Pourboire (zł)</label><input id="tip" type="number" min="0" step=".01" value="0"></div>
-</div>
-<div class="row"><span>Brut</span><b id="courseGross">0,00 zł</b></div>
-<div class="row"><span>Cotisations estimées</span><b class="red" id="courseTax">− 0,00 zł</b></div>
-<div class="row"><b>Net estimé</b><b class="green" id="courseNet">0,00 zł</b></div>
-<div class="btns"><button id="addCourse">Enregistrer la course</button></div>
-</section>
-
-<section class="card wide">
-<h2>💵 TTC argent collecté auprès des clients</h2>
-<p class="note">Suivi séparé des gains et du portefeuille.</p>
-<label>Date de collecte</label><input id="collectDate" type="date">
-<div class="fields">
-<div><label>Montant demandé (zł)</label><input id="collectDue" type="number" min="0" step=".01" placeholder="60"></div>
-<div><label>Montant réellement reçu (zł)</label><input id="collectReceived" type="number" min="0" step=".01" placeholder="60"></div>
-</div>
-<div class="row"><span>Écart restant</span><b id="collectGap">0,00 zł</b></div>
-<div class="btns"><button id="addCollect">Enregistrer la collecte</button></div>
-<label>Voir le total du jour</label><input id="collectViewDate" type="date">
-<div class="row"><span>Total demandé ce jour</span><b id="collectDayDue">0,00 zł</b></div>
-<div class="row"><span>Total réellement reçu ce jour</span><b id="collectDayReceived">0,00 zł</b></div>
-<div class="row"><span><b>TTC réellement collecté ce jour</b></span><b class="green" id="collectAll">0,00 zł</b></div>
-<div class="row"><span>Total reçu sur tout l'historique</span><b id="collectGrandTotal">0,00 zł</b></div>
-<div id="collectHistory" class="history"></div>
-</section>
-
-<section class="card wide">
-<h2>👛 Encaissement du portefeuille Glovo</h2>
-<p class="note">Saisis la date de l'encaissement et la semaine de travail à laquelle il correspond.</p>
-<label>Date de l'encaissement</label><input id="walletDate" type="date">
-<label>Montant encaissé (zł)</label><input id="walletAmount" type="number" min="0" step=".01" placeholder="200">
-<label>Semaine de travail concernée (choisir le lundi)</label><input id="walletWorkWeek" type="date">
-<div class="btns"><button id="addWallet">Enregistrer l'encaissement</button></div>
-<label>Voir le total du jour</label><input id="walletViewDate" type="date">
-<div class="row"><span>Portefeuille ce jour</span><b class="green" id="walletDayTotal">0,00 zł</b></div>
-<div class="row"><span>Total historique portefeuille</span><b id="walletAllTotal">0,00 zł</b></div>
-<div id="walletHistory" class="history"></div>
-</section>
-
-<section class="card wide">
-<h2>📆 Récapitulatif des courses</h2>
-<div class="btns"><button data-tab="day">Aujourd'hui</button><button class="secondary" data-tab="week">Cette semaine</button><button class="secondary" data-tab="all">Tout l'historique</button></div>
-<div class="row"><span>Nombre de courses</span><b id="periodCount">0</b></div>
-<div class="row"><span>Gains bruts</span><b id="periodGross">0,00 zł</b></div>
-<div class="row"><span>Cotisations + Avalon</span><b class="red" id="periodTax">− 0,00 zł</b></div>
-<div class="row"><b>Net estimé</b><b class="green" id="periodNet">0,00 zł</b></div>
-<div class="fields">
-<div><label>Taux de prélèvements (%)</label><input id="taxRate" type="number" min="0" max="100" step=".01" value="28.38"></div>
-<div><label>Frais Avalon supplémentaires (%)</label><input id="avalonRate" type="number" min="0" max="100" step=".01" value="0"></div>
-</div>
-<p class="note">Le taux de 28,38 % est une estimation paramétrable. Vérifie-le selon tes prélèvements réels.</p>
-</section>
-
-<section class="card">
-<h2>🏦 Virement Avalon</h2>
-<label>Date réelle du virement</label><input id="payoutDate" type="date">
-<label>Montant net reçu (zł)</label><input id="payoutAmount" type="number" min="0" step=".01">
-<label>Semaine de travail rémunérée (choisir le lundi)</label><input id="payoutWorkWeek" type="date">
-<div class="btns"><button id="addPayout">Enregistrer le virement</button></div>
-<p class="note">La date de réception et la semaine de travail payée sont enregistrées séparément.</p>
-</section>
-
-<section class="card">
-<h2>⛽ Dépenses</h2>
-<label>Date</label><input id="expenseDate" type="date">
-<label>Type</label><select id="expenseType"><option>Essence</option><option>Parking</option><option>Courses alimentaires</option><option>Entretien voiture</option><option>Autre</option></select>
-<label>Montant (zł)</label><input id="expenseAmount" type="number" min="0" step=".01">
-<div class="btns"><button id="addExpense">Ajouter la dépense</button></div>
-<div class="row"><span>Total dépenses</span><b id="expenseTotal">0,00 zł</b></div>
-</section>
-
-<section class="card wide">
-<h2>📚 Historique général</h2>
-<div id="history" class="history"></div>
-<div class="btns"><button class="secondary" id="export">Exporter sauvegarde JSON</button><button class="secondary" id="importBtn">Importer sauvegarde JSON</button><button class="danger" id="clear">Effacer les données</button><input id="importFile" type="file" accept=".json,application/json" hidden></div>
-<p class="note">Garde régulièrement une sauvegarde JSON.</p>
-</section>
-</div>
-</main>
-
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://mzlklldgpnvepddkzoau.supabase.co';
@@ -206,23 +6,32 @@ const sb=window.supabase?.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const SHARED_ID='shared-courierpilot';
 const READ_ONLY=new URLSearchParams(location.search).get('lecture')==='1';
 const $=id=>document.getElementById(id);
+const setText=(id,value)=>document.querySelectorAll('[id="'+id+'"]').forEach(el=>{el.textContent=value});
 const money=n=>Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' zł';
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 ['courseDate','payoutDate','expenseDate','collectDate','collectViewDate','walletDate','walletViewDate'].forEach(id=>$(id).value=today());
+$('walletWorkWeek').value='';
+$('payoutWorkWeek').value='';
 
 let state={courses:[],payouts:[],expenses:[],collects:[],wallet:[]};
 let tab='day',signedIn=false,syncing=false,pollingRemote=false,remoteRowIds=[SHARED_ID];
+
 try{state={...state,...JSON.parse(localStorage.getItem('cpdata')||'{}')}}catch(e){alert("Les données locales n'ont pas pu être lues. Ne clique pas sur Effacer les données.");}
 ['courses','payouts','expenses','collects','wallet'].forEach(k=>{if(!Array.isArray(state[k]))state[k]=[]});
+state.wallet=state.wallet.map(e=>({...e,workWeek:e.workWeek||(e.date?weekStart(e.date):today())}));
+state.payouts=state.payouts.map(p=>({...p,workWeek:p.workWeek||(p.date?weekStart(p.date):today())}));
+
 const v=id=>Math.max(0,Number($(id).value)||0);
 const tax=()=>Math.min(100,v('taxRate'))/100;
 const av=()=>Math.min(100,v('avalonRate'))/100;
+
 function setStatus(s){$('syncStatus').textContent=s}
 function authUI(on){
  signedIn=on;
  $('signIn').classList.toggle('hidden',on);
  $('signOut').classList.toggle('hidden',!on);
- $('authEmail').disabled=on;$('authPassword').disabled=on;
+ $('authEmail').disabled=on;
+ $('authPassword').disabled=on;
  setStatus(on?'Connecté. Vérification de la synchronisation…':'Déconnecté. Les données locales restent enregistrées.');
  if(READ_ONLY)lockReadOnly();
 }
@@ -234,11 +43,12 @@ function lockReadOnly(){
  document.querySelectorAll('input,select').forEach(el=>{
   if(!['authEmail','authPassword','collectViewDate','walletViewDate'].includes(el.id))el.disabled=true;
  });
- $('importBtn').classList.add('hidden');$('clear').classList.add('hidden');
+ $('importBtn').classList.add('hidden');
+ $('clear').classList.add('hidden');
 }
 function weekStart(s){
- if(!s)return '';
- const d=new Date(s+'T12:00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);
+ const d=new Date(s+'T12:00:00');
+ d.setDate(d.getDate()-(d.getDay()+6)%7);
  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function gross(a){return a.reduce((s,c)=>s+Number(c.amount||0)+Number(c.tip||0),0)}
@@ -249,7 +59,8 @@ function applySnapshot(d){
  for(const k of ['courses','payouts','expenses','collects','wallet'])if(d[k]!==undefined&&!Array.isArray(d[k]))throw Error('Historique invalide');
  state={courses:Array.isArray(d.courses)?d.courses:[],payouts:Array.isArray(d.payouts)?d.payouts:[],expenses:Array.isArray(d.expenses)?d.expenses:[],collects:Array.isArray(d.collects)?d.collects:[],wallet:Array.isArray(d.wallet)?d.wallet:[]};
  if(d.settings){$('taxRate').value=d.settings.taxRate??28.38;$('avalonRate').value=d.settings.avalonRate??0}
- localSave();render();
+ localSave();
+ render();
 }
 function hasRecords(d){return ['courses','payouts','expenses','collects','wallet'].some(k=>Array.isArray(d?.[k])&&d[k].length)}
 function mergeArrays(local,remote){
@@ -271,9 +82,10 @@ function mergeRemoteRows(rows){
  for(const k of ['courses','payouts','expenses','collects','wallet'])out[k]=mergeArrays([],rows.flatMap(r=>Array.isArray(r.data?.[k])?r.data[k]:[]));
  const preferred=rows.find(r=>r.id==='shared')||rows.find(r=>r.id===SHARED_ID)||rows[0];
  remoteRowIds=[...new Set(rows.map(r=>r.id).filter(Boolean))];
+ if(preferred&&!remoteRowIds.includes(preferred.id))remoteRowIds.push(preferred.id);
  if(!remoteRowIds.length)remoteRowIds=[SHARED_ID];
  const withSettings=[...rows].reverse().find(r=>r.data?.settings);
- out.settings=withSettings?.data?.settings||preferred?.data?.settings||null;
+ out.settings=withSettings?.data?.settings||null;
  return out;
 }
 async function pushRemote(){
@@ -297,7 +109,8 @@ async function pullRemote(){
   const rows=await readRemoteRows();
   if(READ_ONLY){
    if(!rows.length){setStatus('Connecté en consultation. Aucune sauvegarde partagée trouvée.');return}
-   applySnapshot(mergeRemoteRows(rows));lockReadOnly();
+   applySnapshot(mergeRemoteRows(rows));
+   lockReadOnly();
    setStatus('Consultation synchronisée ✓ Mise à jour automatique active.');
    return;
   }
@@ -319,16 +132,19 @@ $('signIn').onclick=async()=>{
  if(!sb){setStatus('Connexion Supabase indisponible. Vérifie Internet.');return}
  const email=$('authEmail').value.trim(),password=$('authPassword').value;
  if(!email||!password){setStatus('Saisis l’e-mail et le mot de passe du compte partagé.');return}
- $('signIn').disabled=true;setStatus('Connexion…');
+ $('signIn').disabled=true;
+ setStatus('Connexion…');
  try{
   const {error}=await sb.auth.signInWithPassword({email,password});
   if(error)throw error;
-  authUI(true);await pullRemote();
+  authUI(true);
+  await pullRemote();
  }catch(e){setStatus('Connexion impossible : '+e.message)}
  finally{$('signIn').disabled=false;if(READ_ONLY)lockReadOnly()}
 };
 $('signOut').onclick=async()=>{if(sb)await sb.auth.signOut();authUI(false)};
 if(READ_ONLY)lockReadOnly();
+
 setInterval(async()=>{
  if(signedIn&&READ_ONLY&&!pollingRemote){
   pollingRemote=true;
@@ -336,29 +152,27 @@ setInterval(async()=>{
  }
 },10000);
 if(sb)sb.auth.getSession().then(async({data})=>{if(data.session){authUI(true);await pullRemote()}});
+
 function persist(){
  if(READ_ONLY){setStatus('Mode consultation : aucune modification autorisée.');return}
- localSave();render();if(signedIn)pushRemote();
+ localSave();
+ render();
+ if(signedIn)pushRemote();
 }
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function dateValue(id){return $(id).value||today()}
-function dateMonth(d){return String(d||'').slice(0,7)}
-function assignedWeek(record){return record.workWeek||weekStart(record.date)}
+
 function render(){
- const t=today(),w=weekStart(t),month=t.slice(0,7);
+ const t=today(),w=weekStart(t);
  const day=state.courses.filter(c=>c.date===t);
  const week=state.courses.filter(c=>c.date&&weekStart(c.date)===w);
- const monthCourses=state.courses.filter(c=>dateMonth(c.date)===month);
  const all=tab==='day'?day:tab==='week'?week:state.courses;
  const g=gross(all),ded=g*(tax()+av());
  const sum=arr=>arr.reduce((s,x)=>s+Number(x.amount||0),0);
  const net=arr=>gross(arr)*(1-tax()-av());
  const weekExpenses=state.expenses.filter(e=>e.date&&weekStart(e.date)===w);
- const monthExpenses=state.expenses.filter(e=>dateMonth(e.date)===month);
- const weekWallet=state.wallet.filter(e=>assignedWeek(e)===w);
- const monthWallet=state.wallet.filter(e=>dateMonth(assignedWeek(e))===month);
- const weekPayouts=state.payouts.filter(p=>assignedWeek(p)===w);
- const monthPayouts=state.payouts.filter(p=>dateMonth(assignedWeek(p))===month);
+ const weekWallet=state.wallet.filter(e=>(e.workWeek||(e.date?weekStart(e.date):''))===w);
+ const weekPayouts=state.payouts.filter(p=>(p.workWeek||(p.date?weekStart(p.date):''))===w);
 
  $('todayGross').textContent=money(gross(day));
  $('todayNet').textContent=money(net(day));
@@ -366,6 +180,7 @@ function render(){
  $('weekGross').textContent=money(gross(week));
  $('weekNet').textContent=money(net(week));
  $('weekCount').textContent=week.length+' course(s)';
+
  $('periodCount').textContent=all.length;
  $('periodGross').textContent=money(g);
  $('periodTax').textContent='− '+money(ded);
@@ -386,43 +201,56 @@ function render(){
  $('walletDayTotal').textContent=money(sum(dw));
  $('walletAllTotal').textContent=money(sum(state.wallet));
 
- $('financeWeekGross').textContent=money(gross(week));
- $('financeWeekTax').textContent='− '+money(gross(week)*(tax()+av()));
- $('financeWeekNet').textContent=money(net(week));
- $('financeWeekExpenses').textContent='− '+money(sum(weekExpenses));
- $('financeWeekAfterExpenses').textContent=money(net(week)-sum(weekExpenses));
- $('financeWeekWallet').textContent=money(sum(weekWallet));
- $('financeWeekPayouts').textContent=money(sum(weekPayouts));
- $('financeWeekWalletGap').textContent=money(Math.max(0,net(week)-sum(weekWallet)));
+ setText('financeWeekGross',money(gross(week)));
+ setText('financeWeekTax','− '+money(gross(week)*(tax()+av())));
+ setText('financeWeekNet',money(net(week)));
+ setText('financeWeekExpenses','− '+money(sum(weekExpenses)));
+ setText('financeWeekAfterExpenses',money(net(week)-sum(weekExpenses)));
+ setText('financeWeekWallet',money(sum(weekWallet)));
+ setText('financeWeekWalletGap',money(Math.max(0,net(week)-sum(weekWallet))));
+ setText('walletGapFormula',money(net(week))+' − '+money(sum(weekWallet)));
+ setText('financeWeekPayouts',money(sum(weekPayouts)));
+ setText('avalonWeekCaption',weekPayouts.length?'Semaine de travail : '+w:'Semaine de travail à préciser');
 
- $('financeMonthGross').textContent=money(gross(monthCourses));
- $('financeMonthNet').textContent=money(net(monthCourses));
- $('financeMonthExpenses').textContent=money(sum(monthExpenses));
- $('financeMonthWallet').textContent=money(sum(monthWallet));
- $('financeMonthPayouts').textContent=money(sum(monthPayouts));
+ const workWeeks=[...new Set([
+  ...state.courses.map(c=>c.date?weekStart(c.date):''),
+  ...state.wallet.map(e=>e.workWeek||(e.date?weekStart(e.date):'')),
+  ...state.payouts.map(p=>p.workWeek||(p.date?weekStart(p.date):''))
+ ].filter(Boolean))].sort((a,b)=>b.localeCompare(a));
 
- $('financeAllNet').textContent=money(net(state.courses));
- $('financeAllExpenses').textContent=money(sum(state.expenses));
- $('financeAllAfterExpenses').textContent=money(net(state.courses)-sum(state.expenses));
- $('financeAllWallet').textContent=money(sum(state.wallet));
- $('financeAllPayouts').textContent=money(sum(state.payouts));
+ $('workPeriods').innerHTML=workWeeks.length?workWeeks.map(ww=>{
+   const courses=state.courses.filter(c=>c.date&&weekStart(c.date)===ww);
+   const wallets=state.wallet.filter(e=>(e.workWeek||(e.date?weekStart(e.date):''))===ww);
+   const payouts=state.payouts.filter(p=>(p.workWeek||(p.date?weekStart(p.date):''))===ww);
+   const grossWeek=gross(courses),netWeek=net(courses);
+   return `<div class="period-line"><span>Semaine travaillée · ${esc(ww)}</span><b>${money(grossWeek)} brut</b></div><div class="period-line"><span>Net estimé</span><b class="green">${money(netWeek)}</b></div><div class="period-line"><span>Glovo encaissé</span><b>${money(sum(wallets))}</b></div><div class="period-line"><span>Virement Avalon reçu</span><b>${money(sum(payouts))}</b></div>`;
+ }).join(''):'<div class="empty">Aucune semaine de travail enregistrée.</div>';
+
+ setText('financeAllNet',money(net(state.courses)));
+ setText('financeAllExpenses',money(sum(state.expenses)));
+ setText('financeAllAfterExpenses',money(net(state.courses)-sum(state.expenses)));
+ setText('financeAllWallet',money(sum(state.wallet)));
+ setText('financeAllPayouts',money(sum(state.payouts)));
+ setText('financeAvailable',money(sum(state.payouts)-sum(state.expenses)));
 
  const cr=state.collects.map((c,i)=>({...c,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
- $('collectHistory').innerHTML=cr.length?cr.map(c=>`<div class="row"><span><b>${esc(c.date)}</b><br>Demandé : ${money(c.due)} · Reçu : ${money(c.received)}<br>Écart : ${money(Math.max(0,Number(c.due||0)-Number(c.received||0)))}</span><button class="danger" data-delete-kind="collect" data-delete-index="${c._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucune collecte enregistrée.</div>';
+ $('collectHistory').innerHTML=cr.length?cr.map(c=>`<div class="row"><span><b>${esc(c.date)}</b><br>Demandé : ${money(c.due)} · Reçu : ${money(c.received)}<br>Écart : ${money(Math.max(0,Number(c.due||0)-Number(c.received||0)))}</span><button class="danger" data-delete-collect="${c._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucune collecte enregistrée.</div>';
 
  const wr=state.wallet.map((e,i)=>({...e,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
- $('walletHistory').innerHTML=wr.length?wr.map(e=>`<div class="row"><span><b>${esc(e.date)}</b><br>Encaissement : ${money(e.amount)}<br>Semaine de travail : ${esc(assignedWeek(e)||'Non précisée')}</span><button class="danger" data-delete-kind="wallet" data-delete-index="${e._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucun encaissement enregistré.</div>';
+ $('walletHistory').innerHTML=wr.length?wr.map(e=>`<div class="row"><span><b>${esc(e.date)}</b><br>Encaissement : ${money(e.amount)}<br>Semaine de travail : ${esc(e.workWeek||weekStart(e.date))}</span><button class="danger" data-delete-wallet="${e._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucun encaissement enregistré.</div>';
 
  const items=[
  ...state.courses.map((c,i)=>({date:c.date,title:'Course · '+c.platform,detail:'Brut '+money(Number(c.amount||0)+Number(c.tip||0)),amount:Number(c.amount||0)+Number(c.tip||0),kind:'course',index:i})),
- ...state.payouts.map((p,i)=>({date:p.date,title:'Virement Avalon',detail:'Reçu le '+p.date+' · semaine travaillée '+assignedWeek(p),amount:Number(p.amount||0),kind:'payout',index:i})),
+ ...state.payouts.map((p,i)=>({date:p.date,title:'Virement net Avalon',detail:'Reçu le '+p.date+' · semaine travaillée '+(p.workWeek||weekStart(p.date))+' · déjà net',amount:Number(p.amount||0),kind:'payout',index:i})),
  ...state.expenses.map((e,i)=>({date:e.date,title:'Dépense · '+e.type,detail:'Dépense',amount:-Number(e.amount||0),kind:'expense',index:i})),
  ...state.collects.map((c,i)=>({date:c.date,title:'Collecte client',detail:'Demandé '+money(c.due)+' · reçu '+money(c.received),amount:0,kind:'collect',index:i})),
- ...state.wallet.map((e,i)=>({date:e.date,title:'Encaissement portefeuille Glovo',detail:'Montant '+money(e.amount)+' · semaine travaillée '+assignedWeek(e),amount:0,kind:'wallet',index:i}))
+ ...state.wallet.map((e,i)=>({date:e.date,title:'Encaissement portefeuille Glovo',detail:'Suivi séparé',amount:0,kind:'wallet',index:i}))
  ].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+
  $('history').innerHTML=items.length?items.map(x=>`<div class="row"><span><b>${esc(x.title)}</b><br>${esc(x.date)} · ${esc(x.detail)}</span><span style="text-align:right"><b class="${x.amount<0?'red':''}">${x.amount<0?'− ':''}${money(Math.abs(x.amount))}</b><br><button class="danger" data-delete-kind="${x.kind}" data-delete-index="${x.index}">Supprimer</button></span></div>`).join(''):'<div class="empty">Aucune opération pour le moment.</div>';
  $('collectGap').textContent=money(Math.max(0,v('collectDue')-v('collectReceived')));
 }
+
 $('addCourse').onclick=()=>{
  const amount=v('courseAmount'),tip=v('tip');
  if(amount+tip<=0)return alert('Saisis un montant de course.');
@@ -437,17 +265,17 @@ $('addCollect').onclick=()=>{
  persist();$('collectDue').value='';$('collectReceived').value='0';
 };
 $('addWallet').onclick=()=>{
- const amount=v('walletAmount');
+ const amount=v('walletAmount'),workWeek=$('walletWorkWeek').value;
  if(amount<=0)return alert('Saisis le montant encaissé.');
- const workWeek=weekStart(dateValue('walletWorkWeek')||dateValue('walletDate'));
- state.wallet.push({date:dateValue('walletDate'),workWeek,amount});
+ if(!workWeek)return alert('Choisis le lundi de la semaine de travail concernée.');
+ state.wallet.push({date:dateValue('walletDate'),workWeek:weekStart(workWeek),amount});
  persist();$('walletAmount').value='';
 };
 $('addPayout').onclick=()=>{
- const amount=v('payoutAmount');
+ const amount=v('payoutAmount'),workWeek=$('payoutWorkWeek').value;
  if(amount<=0)return alert('Saisis le montant net reçu.');
- const workWeek=weekStart(dateValue('payoutWorkWeek')||dateValue('payoutDate'));
- state.payouts.push({date:dateValue('payoutDate'),workWeek,amount});
+ if(!workWeek)return alert('Choisis le lundi de la semaine de travail rémunérée.');
+ state.payouts.push({date:dateValue('payoutDate'),workWeek:weekStart(workWeek),amount});
  persist();$('payoutAmount').value='';
 };
 $('addExpense').onclick=()=>{
@@ -456,15 +284,19 @@ $('addExpense').onclick=()=>{
  state.expenses.push({date:dateValue('expenseDate'),type:$('expenseType').value,amount});
  persist();$('expenseAmount').value='';
 };
+
 function deleteOperation(kind,index){
  if(READ_ONLY)return;
- const map={course:'courses',payout:'payouts',expense:'expenses',collect:'collects',wallet:'wallet'};
- const key=map[kind];
+ const map={course:'courses',payout:'payouts',expense:'expenses',collect:'collects',wallet:'wallet'},key=map[kind];
  if(!key||!state[key][index])return;
  if(!confirm('Supprimer cette opération ?'))return;
  state[key].splice(index,1);persist();
 }
 document.addEventListener('click',e=>{
+ const c=e.target.closest('[data-delete-collect]');
+ if(c){deleteOperation('collect',Number(c.dataset.deleteCollect));return}
+ const w=e.target.closest('[data-delete-wallet]');
+ if(w){deleteOperation('wallet',Number(w.dataset.deleteWallet));return}
  const b=e.target.closest('[data-delete-kind]');
  if(b)deleteOperation(b.dataset.deleteKind,Number(b.dataset.deleteIndex));
 });
@@ -477,7 +309,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
 ['collectViewDate','walletViewDate'].forEach(id=>$(id).addEventListener('change',render));
 
 $('export').onclick=()=>{
- const backup={app:'CourierPilot',version:4,exportedAt:new Date().toISOString(),...snapshot()};
+ const backup={app:'CourierPilot',version:3,exportedAt:new Date().toISOString(),...snapshot()};
  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'});
  const url=URL.createObjectURL(blob),a=document.createElement('a');
  a.href=url;a.download='courierpilot-sauvegarde.json';document.body.appendChild(a);a.click();a.remove();
