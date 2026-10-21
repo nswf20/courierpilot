@@ -56,6 +56,34 @@ button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
 <section class="card"><span class="sub">Net estimé cette semaine</span><div class="big green" id="weekNet">0,00 zł</div></section>
 
 <section class="card wide">
+ <section class="card wide">
+<h2>💰 Bilan financier en temps réel</h2>
+<p class="note">Gains, dépenses et argent réellement encaissé. Les encaissements Glovo ne sont pas comptés deux fois dans les gains.</p>
+
+<h2>Cette semaine</h2>
+<div class="row"><span>Gains bruts TTC</span><b id="financeWeekGross">0,00 zł</b></div>
+<div class="row"><span>Cotisations + Avalon estimées</span><b class="red" id="financeWeekTax">− 0,00 zł</b></div>
+<div class="row"><span>Gain net estimé</span><b class="green" id="financeWeekNet">0,00 zł</b></div>
+<div class="row"><span>Dépenses de la semaine</span><b class="red" id="financeWeekExpenses">− 0,00 zł</b></div>
+<div class="row"><b>Net après dépenses</b><b class="green" id="financeWeekAfterExpenses">0,00 zł</b></div>
+<div class="row"><span>Encaissements du portefeuille Glovo</span><b id="financeWeekWallet">0,00 zł</b></div>
+<div class="row"><span>Virements Avalon reçus</span><b id="financeWeekPayouts">0,00 zł</b></div>
+
+<h2 style="margin-top:18px">Ce mois-ci</h2>
+<div class="row"><span>Gains bruts TTC</span><b id="financeMonthGross">0,00 zł</b></div>
+<div class="row"><span>Gain net estimé</span><b class="green" id="financeMonthNet">0,00 zł</b></div>
+<div class="row"><span>Dépenses</span><b class="red" id="financeMonthExpenses">0,00 zł</b></div>
+<div class="row"><span>Encaissements Glovo</span><b id="financeMonthWallet">0,00 zł</b></div>
+<div class="row"><span>Virements Avalon reçus</span><b id="financeMonthPayouts">0,00 zł</b></div>
+
+<h2 style="margin-top:18px">Depuis le début de l'historique</h2>
+<div class="row"><span>Gain net estimé cumulé</span><b class="green" id="financeAllNet">0,00 zł</b></div>
+<div class="row"><span>Total des dépenses</span><b class="red" id="financeAllExpenses">0,00 zł</b></div>
+<div class="row"><span>Net après toutes les dépenses</span><b id="financeAllAfterExpenses">0,00 zł</b></div>
+<div class="row"><span>Total encaissé depuis le portefeuille Glovo</span><b id="financeAllWallet">0,00 zł</b></div>
+<div class="row"><span>Total des virements Avalon</span><b id="financeAllPayouts">0,00 zł</b></div>
+<div class="row"><b>Virements Avalon moins dépenses</b><b id="financeAvailable">0,00 zł</b></div>
+</section>
 <h2>➕ Ajouter une course</h2>
 <div class="fields">
 <div><label>Date</label><input id="courseDate" type="date"></div>
