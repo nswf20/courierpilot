@@ -26,13 +26,11 @@ input,select{width:100%;background:#0c1b29;color:var(--text);border:1px solid #3
 .row:last-child{border-bottom:0}
 .big{font-size:23px;font-weight:750}.green{color:var(--green)}.red{color:var(--red)}
 .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-button{border:0;border-radius:10px;padding:11px 12px;font-weight:700;background:var(--green);color:#092019}
+button{border:0;border-radius:10px;padding:11px 12px;font-weight:700;background:var(--green);color:#092019;cursor:pointer}
 button.secondary{background:#29465c;color:white}
-button.danger{background:#4b2931;color:#ffd9d9}
+button.danger{background:#4b2931;color:#ffd9d9;padding:8px 10px;font-size:12px}
 .note{line-height:1.5}.history{font-size:12px;overflow-wrap:anywhere}
 .empty{color:var(--muted);font-size:12px;padding:8px 0}
-.check{display:flex;align-items:center;gap:8px}
-.check input{width:auto}
 @media(max-width:520px){.grid,.fields{grid-template-columns:1fr}.wide{grid-column:auto}.big{font-size:21px}}
 </style>
 </head>
@@ -62,7 +60,7 @@ button.danger{background:#4b2931;color:#ffd9d9}
 
 <section class="card wide">
 <h2>💵 TTC argent collecté auprès des clients</h2>
-<p class="note">Note ce que Glovo te demande de collecter et ce que tu as réellement reçu. Ce suivi reste séparé des gains.</p>
+<p class="note">Historique conservé pour toutes les dates. Le suivi des collectes reste séparé des gains et du portefeuille.</p>
 <label>Date de collecte</label><input id="collectDate" type="date">
 <div class="fields">
 <div><label>Montant demandé (zł)</label><input id="collectDue" type="number" min="0" step=".01" placeholder="60"></div>
@@ -73,13 +71,14 @@ button.danger{background:#4b2931;color:#ffd9d9}
 <label>Voir le total du jour</label><input id="collectViewDate" type="date">
 <div class="row"><span>Total demandé ce jour</span><b id="collectDayDue">0,00 zł</b></div>
 <div class="row"><span>Total réellement reçu ce jour</span><b id="collectDayReceived">0,00 zł</b></div>
-<div class="row"><span><b>TTC réellement collecté</b></span><b class="green" id="collectAll">0,00 zł</b></div>
+<div class="row"><span><b>TTC réellement collecté ce jour</b></span><b class="green" id="collectAll">0,00 zł</b></div>
+<div class="row"><span>Total reçu sur tout l'historique</span><b id="collectGrandTotal">0,00 zł</b></div>
 <div id="collectHistory" class="history"></div>
 </section>
 
 <section class="card wide">
 <h2>👛 TTC argent encaissé depuis le portefeuille Glovo</h2>
-<p class="note">Note ici l'argent que tu encaisses depuis ton portefeuille Glovo pour te payer. Ce total ne sera pas additionné aux collectes clients.</p>
+<p class="note">Suivi séparé des collectes clients. Supprimer une entrée ici ne supprime pas une collecte client.</p>
 <label>Date de l'encaissement</label><input id="walletDate" type="date">
 <label>Montant encaissé (zł)</label><input id="walletAmount" type="number" min="0" step=".01" placeholder="200">
 <div class="btns"><button id="addWallet">Enregistrer l'encaissement</button></div>
@@ -100,7 +99,7 @@ button.danger{background:#4b2931;color:#ffd9d9}
 <div><label>Taux de prélèvements (%)</label><input id="taxRate" type="number" min="0" max="100" step=".01" value="28.38"></div>
 <div><label>Frais Avalon supplémentaires (%)</label><input id="avalonRate" type="number" min="0" max="100" step=".01" value="0"></div>
 </div>
-<p class="note">Le taux de 28,38 % est celui que tu as indiqué. Les frais Avalon supplémentaires restent à 0 %.</p>
+<p class="note">Le taux de 28,38 % est celui indiqué. Les frais Avalon supplémentaires restent à 0 %.</p>
 </section>
 
 <section class="card">
@@ -123,69 +122,258 @@ button.danger{background:#4b2931;color:#ffd9d9}
 <section class="card wide">
 <h2>📚 Historique général</h2>
 <div id="history" class="history"></div>
-<div class="btns"><button class="secondary" id="export">Exporter sauvegarde</button><button class="secondary" id="importBtn">Importer sauvegarde</button><button class="danger" id="clear">Effacer les données</button><input id="importFile" type="file" accept="application/json" hidden></div>
-<p class="note">Les données restent dans le stockage local de ce navigateur. Exporte une sauvegarde régulièrement.</p>
+<div class="btns">
+<button class="secondary" id="export">Exporter sauvegarde JSON</button>
+<button class="secondary" id="importBtn">Importer sauvegarde JSON</button>
+<button class="danger" id="clear">Effacer les données</button>
+<input id="importFile" type="file" accept=".json,application/json" hidden>
+</div>
+<p class="note">Les données restent dans le stockage local de ce navigateur. La sauvegarde est exportée en fichier JSON.</p>
 </section>
 </div></main>
 
 <script>
 const $=id=>document.getElementById(id);
 const money=n=>Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' zł';
-const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 ['courseDate','payoutDate','expenseDate','collectDate','collectViewDate','walletDate','walletViewDate'].forEach(id=>$(id).value=today());
-let state={courses:[],payouts:[],expenses:[],collects:[],wallet:[]},tab='day';
-try{state={...state,...JSON.parse(localStorage.getItem('cpdata')||'{}')}}catch(e){}
-['courses','payouts','expenses','collects','wallet'].forEach(k=>{if(!Array.isArray(state[k]))state[k]=[]});
+
+let state={courses:[],payouts:[],expenses:[],collects:[],wallet:[]};
+let tab='day';
+try {
+  const saved=JSON.parse(localStorage.getItem('cpdata')||'{}');
+  state={...state,...saved};
+} catch(e) {
+  alert("Les données enregistrées n'ont pas pu être lues. Ne clique pas sur Effacer les données.");
+}
+['courses','payouts','expenses','collects','wallet'].forEach(k=>{
+  if(!Array.isArray(state[k]))state[k]=[];
+});
+
 const v=id=>Math.max(0,Number($(id).value)||0);
 const tax=()=>Math.min(100,v('taxRate'))/100;
 const av=()=>Math.min(100,v('avalonRate'))/100;
-function weekStart(s){let d=new Date(s+'T12:00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);return d.toISOString().slice(0,10)}
-function gross(a){return a.reduce((s,c)=>s+c.amount+c.tip,0)}
-function persist(){localStorage.setItem('cpdata',JSON.stringify(state));render()}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function render(){
-let t=today(),w=weekStart(t);
-let day=state.courses.filter(c=>c.date===t),week=state.courses.filter(c=>weekStart(c.date)===w);
-let all=tab==='day'?day:tab==='week'?week:state.courses;
-let g=gross(all),ded=g*(tax()+av());
-$('todayGross').textContent=money(gross(day));$('todayNet').textContent=money(gross(day)*(1-tax()-av()));$('todayCount').textContent=day.length+' course(s)';
-$('weekGross').textContent=money(gross(week));$('weekNet').textContent=money(gross(week)*(1-tax()-av()));$('weekCount').textContent=week.length+' course(s)';
-$('periodCount').textContent=all.length;$('periodGross').textContent=money(g);$('periodTax').textContent='− '+money(ded);$('periodNet').textContent=money(g-ded);
-let cg=v('courseAmount')+v('tip');$('courseGross').textContent=money(cg);$('courseTax').textContent='− '+money(cg*(tax()+av()));$('courseNet').textContent=money(cg*(1-tax()-av()));
-$('expenseTotal').textContent=money(state.expenses.reduce((s,e)=>s+e.amount,0));
-let cd=$('collectViewDate').value,wd=$('walletViewDate').value;
-let collects=state.collects.filter(c=>c.date===cd),wallet=state.wallet.filter(e=>e.date===wd);
-$('collectDayDue').textContent=money(collects.reduce((s,c)=>s+c.due,0));
-$('collectDayReceived').textContent=money(collects.reduce((s,c)=>s+c.received,0));
-$('collectAll').textContent=money(collects.reduce((s,c)=>s+c.received,0));
-$('walletDayTotal').textContent=money(wallet.reduce((s,e)=>s+e.amount,0));
-$('walletAllTotal').textContent=money(state.wallet.reduce((s,e)=>s+e.amount,0));
-$('collectHistory').innerHTML=collects.length?collects.map(c=>`<div class="row"><span>${esc(c.date)} · demandé ${money(c.due)} · reçu ${money(c.received)}</span><b>${money(c.due-c.received)} restant</b></div>`).join(''):'<div class="empty">Aucune collecte ce jour.</div>';
-$('walletHistory').innerHTML=wallet.length?wallet.map(e=>`<div class="row"><span>${esc(e.date)}</span><b>${money(e.amount)}</b></div>`).join(''):'<div class="empty">Aucun encaissement ce jour.</div>';
-let items=[
-...state.courses.map(c=>({date:c.date,title:'Course · '+c.platform,detail:'Brut '+money(c.amount+c.tip),amount:c.amount+c.tip})),
-...state.payouts.map(p=>({date:p.date,title:'Virement net Avalon',detail:'Déjà net',amount:p.amount})),
-...state.expenses.map(e=>({date:e.date,title:'Dépense · '+e.type,detail:'Dépense',amount:-e.amount})),
-...state.collects.map(c=>({date:c.date,title:'Collecte client',detail:'Demandé '+money(c.due)+' · reçu '+money(c.received),amount:0})),
-...state.wallet.map(e=>({date:e.date,title:'Encaissement portefeuille Glovo',detail:'Suivi séparé',amount:0}))
-].sort((a,b)=>b.date.localeCompare(a.date));
-$('history').innerHTML=items.length?items.map(x=>`<div class="row"><span><b>${esc(x.title)}</b><br>${esc(x.date)} · ${esc(x.detail)}</span><b class="${x.amount<0?'red':''}">${x.amount<0?'− ':''}${money(Math.abs(x.amount))}</b></div>`).join(''):'<div class="empty">Aucune opération pour le moment.</div>';
-let due=v('collectDue'),received=v('collectReceived');$('collectGap').textContent=money(Math.max(0,due-received));
+function weekStart(s){
+  const d=new Date(s+'T12:00:00');
+  d.setDate(d.getDate()-(d.getDay()+6)%7);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-$('addCourse').onclick=()=>{let amount=v('courseAmount'),tip=v('tip');if(amount+tip<=0)return alert('Saisis un montant de course.');state.courses.push({date:$('courseDate').value||today(),platform:$('platform').value,amount,tip});persist();$('courseAmount').value='';$('tip').value=0};
-$('addCollect').onclick=()=>{let due=v('collectDue'),received=v('collectReceived');if(due<=0)return alert('Saisis le montant demandé.');if(received>due)return alert('Le montant reçu ne peut pas dépasser le montant demandé.');state.collects.push({date:$('collectDate').value||today(),due,received});persist();$('collectDue').value='';$('collectReceived').value='0'};
-$('addWallet').onclick=()=>{let amount=v('walletAmount');if(amount<=0)return alert('Saisis le montant encaissé.');state.wallet.push({date:$('walletDate').value||today(),amount});persist();$('walletAmount').value=''};
-$('addPayout').onclick=()=>{let amount=v('payoutAmount');if(!amount)return alert('Saisis le montant net reçu.');state.payouts.push({date:$('payoutDate').value||today(),amount});persist();$('payoutAmount').value=''};
-$('addExpense').onclick=()=>{let amount=v('expenseAmount');if(!amount)return alert('Saisis le montant de la dépense.');state.expenses.push({date:$('expenseDate').value||today(),type:$('expenseType').value,amount});persist();$('expenseAmount').value=''};
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.className=x===b?'':'secondary');render()});
+function gross(a){return a.reduce((s,c)=>s+Number(c.amount||0)+Number(c.tip||0),0)}
+function persist(){
+  try {
+    localStorage.setItem('cpdata',JSON.stringify(state));
+    render();
+  } catch(e) {
+    alert("Impossible d'enregistrer les données. Vérifie l'espace disponible dans le navigateur.");
+  }
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function dateValue(id){return $(id).value||today()}
+
+function render(){
+  const t=today(),w=weekStart(t);
+  const day=state.courses.filter(c=>c.date===t);
+  const week=state.courses.filter(c=>weekStart(c.date)===w);
+  const all=tab==='day'?day:tab==='week'?week:state.courses;
+  const g=gross(all),ded=g*(tax()+av());
+
+  $('todayGross').textContent=money(gross(day));
+  $('todayNet').textContent=money(gross(day)*(1-tax()-av()));
+  $('todayCount').textContent=day.length+' course(s)';
+  $('weekGross').textContent=money(gross(week));
+  $('weekNet').textContent=money(gross(week)*(1-tax()-av()));
+  $('weekCount').textContent=week.length+' course(s)';
+  $('periodCount').textContent=all.length;
+  $('periodGross').textContent=money(g);
+  $('periodTax').textContent='− '+money(ded);
+  $('periodNet').textContent=money(g-ded);
+
+  const cg=v('courseAmount')+v('tip');
+  $('courseGross').textContent=money(cg);
+  $('courseTax').textContent='− '+money(cg*(tax()+av()));
+  $('courseNet').textContent=money(cg*(1-tax()-av()));
+  $('expenseTotal').textContent=money(state.expenses.reduce((s,e)=>s+Number(e.amount||0),0));
+
+  const cd=dateValue('collectViewDate');
+  const wd=dateValue('walletViewDate');
+  const dayCollects=state.collects.filter(c=>c.date===cd);
+  const dayWallet=state.wallet.filter(e=>e.date===wd);
+
+  $('collectDayDue').textContent=money(dayCollects.reduce((s,c)=>s+Number(c.due||0),0));
+  $('collectDayReceived').textContent=money(dayCollects.reduce((s,c)=>s+Number(c.received||0),0));
+  $('collectAll').textContent=money(dayCollects.reduce((s,c)=>s+Number(c.received||0),0));
+  $('collectGrandTotal').textContent=money(state.collects.reduce((s,c)=>s+Number(c.received||0),0));
+  $('walletDayTotal').textContent=money(dayWallet.reduce((s,e)=>s+Number(e.amount||0),0));
+  $('walletAllTotal').textContent=money(state.wallet.reduce((s,e)=>s+Number(e.amount||0),0));
+
+  // L'historique des collectes affiche toutes les dates, pas uniquement celle sélectionnée.
+  const collectRows=state.collects.map((c,i)=>({...c,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  $('collectHistory').innerHTML=collectRows.length?collectRows.map(c=>`
+    <div class="row">
+      <span><b>${esc(c.date)}</b><br>Demandé : ${money(c.due)} · Reçu : ${money(c.received)}<br>Écart : ${money(Math.max(0,Number(c.due||0)-Number(c.received||0)))}</span>
+      <button class="danger" data-delete-collect="${c._index}">Supprimer</button>
+    </div>`).join(''):'<div class="empty">Aucune collecte enregistrée.</div>';
+
+  // L'historique du portefeuille affiche toutes les dates, séparément des collectes.
+  const walletRows=state.wallet.map((e,i)=>({...e,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  $('walletHistory').innerHTML=walletRows.length?walletRows.map(e=>`
+    <div class="row">
+      <span><b>${esc(e.date)}</b><br>Encaissement : ${money(e.amount)}</span>
+      <button class="danger" data-delete-wallet="${e._index}">Supprimer</button>
+    </div>`).join(''):'<div class="empty">Aucun encaissement enregistré.</div>';
+
+  const items=[
+    ...state.courses.map((c,i)=>({date:c.date,title:'Course · '+c.platform,detail:'Brut '+money(Number(c.amount||0)+Number(c.tip||0)),amount:Number(c.amount||0)+Number(c.tip||0),kind:'course',index:i})),
+    ...state.payouts.map((p,i)=>({date:p.date,title:'Virement net Avalon',detail:'Déjà net',amount:Number(p.amount||0),kind:'payout',index:i})),
+    ...state.expenses.map((e,i)=>({date:e.date,title:'Dépense · '+e.type,detail:'Dépense',amount:-Number(e.amount||0),kind:'expense',index:i})),
+    ...state.collects.map((c,i)=>({date:c.date,title:'Collecte client',detail:'Demandé '+money(c.due)+' · reçu '+money(c.received),amount:0,kind:'collect',index:i})),
+    ...state.wallet.map((e,i)=>({date:e.date,title:'Encaissement portefeuille Glovo',detail:'Suivi séparé',amount:0,kind:'wallet',index:i}))
+  ].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+
+  $('history').innerHTML=items.length?items.map(x=>`
+    <div class="row">
+      <span><b>${esc(x.title)}</b><br>${esc(x.date)} · ${esc(x.detail)}</span>
+      <span style="text-align:right">
+        <b class="${x.amount<0?'red':''}">${x.amount<0?'− ':''}${money(Math.abs(x.amount))}</b><br>
+        <button class="danger" data-delete-kind="${x.kind}" data-delete-index="${x.index}">Supprimer</button>
+      </span>
+    </div>`).join(''):'<div class="empty">Aucune opération pour le moment.</div>';
+
+  $('collectGap').textContent=money(Math.max(0,v('collectDue')-v('collectReceived')));
+}
+
+$('addCourse').onclick=()=>{
+  const amount=v('courseAmount'),tip=v('tip');
+  if(amount+tip<=0)return alert('Saisis un montant de course.');
+  state.courses.push({date:dateValue('courseDate'),platform:$('platform').value,amount,tip});
+  persist();$('courseAmount').value='';$('tip').value='0';
+};
+$('addCollect').onclick=()=>{
+  const due=v('collectDue'),received=v('collectReceived');
+  if(due<=0)return alert('Saisis le montant demandé.');
+  if(received>due)return alert('Le montant reçu ne peut pas dépasser le montant demandé.');
+  state.collects.push({date:dateValue('collectDate'),due,received});
+  persist();$('collectDue').value='';$('collectReceived').value='0';
+};
+$('addWallet').onclick=()=>{
+  const amount=v('walletAmount');
+  if(amount<=0)return alert('Saisis le montant encaissé.');
+  state.wallet.push({date:dateValue('walletDate'),amount});
+  persist();$('walletAmount').value='';
+};
+$('addPayout').onclick=()=>{
+  const amount=v('payoutAmount');
+  if(amount<=0)return alert('Saisis le montant net reçu.');
+  state.payouts.push({date:dateValue('payoutDate'),amount});
+  persist();$('payoutAmount').value='';
+};
+$('addExpense').onclick=()=>{
+  const amount=v('expenseAmount');
+  if(amount<=0)return alert('Saisis le montant de la dépense.');
+  state.expenses.push({date:dateValue('expenseDate'),type:$('expenseType').value,amount});
+  persist();$('expenseAmount').value='';
+};
+
+function deleteOperation(kind,index){
+  const map={course:'courses',payout:'payouts',expense:'expenses',collect:'collects',wallet:'wallet'};
+  const key=map[kind];
+  if(!key||!state[key][index])return;
+  const labels={course:'cette course',payout:'ce virement Avalon',expense:'cette dépense',collect:'cette collecte client',wallet:'cet encaissement du portefeuille'};
+  let message='Supprimer '+labels[kind]+' ?';
+  if(kind==='collect')message+='\n\nCela ne modifie pas les encaissements du portefeuille, qui sont enregistrés séparément.';
+  if(kind==='wallet')message+='\n\nCela ne modifie pas les collectes clients.';
+  if(!confirm(message))return;
+  state[key].splice(index,1);
+  persist();
+}
+document.addEventListener('click',e=>{
+  const c=e.target.closest('[data-delete-collect]');
+  if(c){deleteOperation('collect',Number(c.dataset.deleteCollect));return;}
+  const w=e.target.closest('[data-delete-wallet]');
+  if(w){deleteOperation('wallet',Number(w.dataset.deleteWallet));return;}
+  const b=e.target.closest('[data-delete-kind]');
+  if(b)deleteOperation(b.dataset.deleteKind,Number(b.dataset.deleteIndex));
+});
+
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
+  tab=b.dataset.tab;
+  document.querySelectorAll('[data-tab]').forEach(x=>x.className=x===b?'':'secondary');
+  render();
+});
 ['courseAmount','tip','taxRate','avalonRate','collectDue','collectReceived'].forEach(id=>$(id).addEventListener('input',render));
 ['collectViewDate','walletViewDate'].forEach(id=>$(id).addEventListener('change',render));
-$('export').onclick=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({...state,settings:{taxRate:v('taxRate'),avalonRate:v('avalonRate')}},null,2)],{type:'application/json'}));a.download='courierpilot-sauvegarde.json';a.click();URL.revokeObjectURL(a.href)};
+
+// Export explicite en JSON.
+$('export').onclick=()=>{
+  const backup={
+    app:'CourierPilot',
+    version:2,
+    exportedAt:new Date().toISOString(),
+    courses:state.courses,
+    payouts:state.payouts,
+    expenses:state.expenses,
+    collects:state.collects,
+    wallet:state.wallet,
+    settings:{taxRate:v('taxRate'),avalonRate:v('avalonRate')}
+  };
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='courierpilot-sauvegarde.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+};
+
 $('importBtn').onclick=()=>$('importFile').click();
-$('importFile').onchange=async e=>{try{let s=JSON.parse(await e.target.files[0].text());if(!Array.isArray(s.courses)||!Array.isArray(s.payouts)||!Array.isArray(s.expenses))throw Error();state={...state,...s};['collects','wallet'].forEach(k=>{if(!Array.isArray(state[k]))state[k]=[]});if(s.settings){$('taxRate').value=s.settings.taxRate??28.38;$('avalonRate').value=s.settings.avalonRate??0}persist();alert('Sauvegarde importée')}catch(e){alert('Sauvegarde invalide')}e.target.value=''};
-$('clear').onclick=()=>{if(confirm('Effacer toutes les données locales ?')){state={courses:[],payouts:[],expenses:[],collects:[],wallet:[]};persist()}};
+$('importFile').onchange=async e=>{
+  const file=e.target.files&&e.target.files[0];
+  if(!file)return;
+  try{
+    const s=JSON.parse(await file.text());
+    for(const k of ['courses','payouts','expenses','collects','wallet']){
+      if(s[k]!==undefined&&!Array.isArray(s[k]))throw Error('Format invalide');
+    }
+    if(!confirm('Importer cette sauvegarde et remplacer les données actuellement affichées ?'))return;
+    state={
+      courses:Array.isArray(s.courses)?s.courses:[],
+      payouts:Array.isArray(s.payouts)?s.payouts:[],
+      expenses:Array.isArray(s.expenses)?s.expenses:[],
+      collects:Array.isArray(s.collects)?s.collects:[],
+      wallet:Array.isArray(s.wallet)?s.wallet:[]
+    };
+    if(s.settings){
+      $('taxRate').value=s.settings.taxRate??28.38;
+      $('avalonRate').value=s.settings.avalonRate??0;
+    }
+    persist();
+    alert('Sauvegarde JSON importée.');
+  }catch(err){
+    alert('Fichier invalide. Aucune donnée importée.');
+  }finally{
+    e.target.value='';
+  }
+};
+
+$('clear').onclick=()=>{
+  if(confirm('Effacer toutes les données locales ? Cette action est irréversible sans sauvegarde.')){
+    state={courses:[],payouts:[],expenses:[],collects:[],wallet:[]};
+    persist();
+  }
+};
+
 render();
 </script>
-<script>if("serviceWorker" in navigator && location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));</script>
+<script>
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'})
+      .then(reg=>reg.update())
+      .catch(()=>{});
+  });
+}
+</script>
 </body>
 </html>
