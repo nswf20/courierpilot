@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="fr">
 <head>
@@ -6,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#13283b">
 <title>CourierPilot</title>
-<link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--bg:#0b1520;--panel:#13283b;--text:#f3f7fb;--muted:#a8bac9;--line:#294357;--green:#72e0b2;--red:#ff8b8b}
 *{box-sizing:border-box}
@@ -23,22 +21,35 @@ label{display:block;font-size:12px;color:var(--muted);margin:9px 0 5px}
 input,select{width:100%;background:#0c1b29;color:var(--text);border:1px solid #36536a;border-radius:10px;padding:10px;font:inherit;min-width:0}
 .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:0}
-.big{font-size:23px;font-weight:750}.green{color:var(--green)}.red{color:var(--red)}
+.row:last-child{border-bottom:0}.big{font-size:23px;font-weight:750}
+.green{color:var(--green)}.red{color:var(--red)}
 .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 button{border:0;border-radius:10px;padding:11px 12px;font-weight:700;background:var(--green);color:#092019;cursor:pointer}
 button.secondary{background:#29465c;color:white}
 button.danger{background:#4b2931;color:#ffd9d9;padding:8px 10px;font-size:12px}
 .note{line-height:1.5}.history{font-size:12px;overflow-wrap:anywhere}
 .empty{color:var(--muted);font-size:12px;padding:8px 0}
+.status{padding:10px;border-radius:10px;background:#0c1b29;color:var(--muted);font-size:13px;line-height:1.4;margin-top:10px}
+.hidden{display:none!important}
+button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
 @media(max-width:520px){.grid,.fields{grid-template-columns:1fr}.wide{grid-column:auto}.big{font-size:21px}}
 </style>
 </head>
 <body>
 <main class="wrap">
 <header><div class="logo">↗</div><div><h1>CourierPilot</h1><div class="sub">Courses · cotisations · Avalon · Glovo · PLN</div></div></header>
-<div class="grid">
 
+<section class="card wide" id="authCard">
+<h2>🔐 Synchronisation</h2>
+<p class="note">Connecte-toi avec le compte partagé pour synchroniser les données.</p>
+<label>E-mail</label><input id="authEmail" type="email" autocomplete="username">
+<label>Mot de passe</label><input id="authPassword" type="password" autocomplete="current-password">
+<div class="btns"><button id="signIn">Se connecter</button><button id="signOut" class="secondary hidden">Se déconnecter</button></div>
+<div id="syncStatus" class="status">Les données locales sont conservées. Connecte-toi pour synchroniser.</div>
+<p id="readOnlyNote" class="note hidden">Mode consultation : aucune modification ne sera envoyée depuis ce téléphone.</p>
+</section>
+
+<div class="grid">
 <section class="card"><span class="sub">Brut aujourd'hui</span><div class="big" id="todayGross">0,00 zł</div><div class="sub" id="todayCount">0 course</div></section>
 <section class="card"><span class="sub">Net estimé aujourd'hui</span><div class="big green" id="todayNet">0,00 zł</div></section>
 <section class="card"><span class="sub">Brut cette semaine</span><div class="big" id="weekGross">0,00 zł</div><div class="sub" id="weekCount">0 course</div></section>
@@ -60,7 +71,7 @@ button.danger{background:#4b2931;color:#ffd9d9;padding:8px 10px;font-size:12px}
 
 <section class="card wide">
 <h2>💵 TTC argent collecté auprès des clients</h2>
-<p class="note">Historique conservé pour toutes les dates. Le suivi des collectes reste séparé des gains et du portefeuille.</p>
+<p class="note">Historique séparé des gains et du portefeuille.</p>
 <label>Date de collecte</label><input id="collectDate" type="date">
 <div class="fields">
 <div><label>Montant demandé (zł)</label><input id="collectDue" type="number" min="0" step=".01" placeholder="60"></div>
@@ -78,7 +89,7 @@ button.danger{background:#4b2931;color:#ffd9d9;padding:8px 10px;font-size:12px}
 
 <section class="card wide">
 <h2>👛 TTC argent encaissé depuis le portefeuille Glovo</h2>
-<p class="note">Suivi séparé des collectes clients. Supprimer une entrée ici ne supprime pas une collecte client.</p>
+<p class="note">Suivi séparé des collectes clients.</p>
 <label>Date de l'encaissement</label><input id="walletDate" type="date">
 <label>Montant encaissé (zł)</label><input id="walletAmount" type="number" min="0" step=".01" placeholder="200">
 <div class="btns"><button id="addWallet">Enregistrer l'encaissement</button></div>
@@ -122,258 +133,254 @@ button.danger{background:#4b2931;color:#ffd9d9;padding:8px 10px;font-size:12px}
 <section class="card wide">
 <h2>📚 Historique général</h2>
 <div id="history" class="history"></div>
-<div class="btns">
-<button class="secondary" id="export">Exporter sauvegarde JSON</button>
-<button class="secondary" id="importBtn">Importer sauvegarde JSON</button>
-<button class="danger" id="clear">Effacer les données</button>
-<input id="importFile" type="file" accept=".json,application/json" hidden>
-</div>
-<p class="note">Les données restent dans le stockage local de ce navigateur. La sauvegarde est exportée en fichier JSON.</p>
+<div class="btns"><button class="secondary" id="export">Exporter sauvegarde JSON</button><button class="secondary" id="importBtn">Importer sauvegarde JSON</button><button class="danger" id="clear">Effacer les données</button><input id="importFile" type="file" accept=".json,application/json" hidden></div>
+<p class="note">Garde régulièrement une sauvegarde JSON.</p>
 </section>
-</div></main>
+</div>
+</main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL='https://mzlklldgpnvepddkzoau.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_cMAUUlt9pxzHicf2o4U3WQ_vV4h3tvl';
+const sb=window.supabase?.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const SHARED_ID='shared-courierpilot';
+const READ_ONLY=new URLSearchParams(location.search).get('lecture')==='1';
 const $=id=>document.getElementById(id);
 const money=n=>Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' zł';
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 ['courseDate','payoutDate','expenseDate','collectDate','collectViewDate','walletDate','walletViewDate'].forEach(id=>$(id).value=today());
 
 let state={courses:[],payouts:[],expenses:[],collects:[],wallet:[]};
-let tab='day';
-try {
-  const saved=JSON.parse(localStorage.getItem('cpdata')||'{}');
-  state={...state,...saved};
-} catch(e) {
-  alert("Les données enregistrées n'ont pas pu être lues. Ne clique pas sur Effacer les données.");
-}
-['courses','payouts','expenses','collects','wallet'].forEach(k=>{
-  if(!Array.isArray(state[k]))state[k]=[];
-});
-
+let tab='day',signedIn=false,syncing=false,pollingRemote=false,remoteRowIds=[SHARED_ID];
+try{state={...state,...JSON.parse(localStorage.getItem('cpdata')||'{}')}}catch(e){alert("Les données locales n'ont pas pu être lues. Ne clique pas sur Effacer les données.");}
+['courses','payouts','expenses','collects','wallet'].forEach(k=>{if(!Array.isArray(state[k]))state[k]=[]});
 const v=id=>Math.max(0,Number($(id).value)||0);
 const tax=()=>Math.min(100,v('taxRate'))/100;
 const av=()=>Math.min(100,v('avalonRate'))/100;
+
+function setStatus(s){$('syncStatus').textContent=s}
+function authUI(on){
+ signedIn=on;
+ $('signIn').classList.toggle('hidden',on);
+ $('signOut').classList.toggle('hidden',!on);
+ $('authEmail').disabled=on;$('authPassword').disabled=on;
+ setStatus(on?'Connecté. Vérification de la synchronisation…':'Déconnecté. Les données locales restent enregistrées.');
+ if(READ_ONLY)lockReadOnly();
+}
+function lockReadOnly(){
+ $('readOnlyNote').classList.remove('hidden');
+ document.querySelectorAll('button').forEach(b=>{
+  if(!['signIn','signOut','export'].includes(b.id)&&!b.hasAttribute('data-tab'))b.disabled=true;
+ });
+ document.querySelectorAll('input,select').forEach(el=>{
+  if(!['authEmail','authPassword','collectViewDate','walletViewDate'].includes(el.id))el.disabled=true;
+ });
+ $('importBtn').classList.add('hidden');$('clear').classList.add('hidden');
+}
 function weekStart(s){
-  const d=new Date(s+'T12:00:00');
-  d.setDate(d.getDate()-(d.getDay()+6)%7);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+ const d=new Date(s+'T12:00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function gross(a){return a.reduce((s,c)=>s+Number(c.amount||0)+Number(c.tip||0),0)}
-function persist(){
-  try {
-    localStorage.setItem('cpdata',JSON.stringify(state));
-    render();
-  } catch(e) {
-    alert("Impossible d'enregistrer les données. Vérifie l'espace disponible dans le navigateur.");
+function localSave(){try{localStorage.setItem('cpdata',JSON.stringify(state))}catch(e){alert("Impossible d'enregistrer les données. Vérifie l'espace disponible dans le navigateur.")}}
+function snapshot(){return {courses:state.courses,payouts:state.payouts,expenses:state.expenses,collects:state.collects,wallet:state.wallet,settings:{taxRate:v('taxRate'),avalonRate:v('avalonRate')}}}
+function applySnapshot(d){
+ if(!d||typeof d!=='object')throw Error('Sauvegarde distante invalide');
+ for(const k of ['courses','payouts','expenses','collects','wallet'])if(d[k]!==undefined&&!Array.isArray(d[k]))throw Error('Historique invalide');
+ state={courses:Array.isArray(d.courses)?d.courses:[],payouts:Array.isArray(d.payouts)?d.payouts:[],expenses:Array.isArray(d.expenses)?d.expenses:[],collects:Array.isArray(d.collects)?d.collects:[],wallet:Array.isArray(d.wallet)?d.wallet:[]};
+ if(d.settings){$('taxRate').value=d.settings.taxRate??28.38;$('avalonRate').value=d.settings.avalonRate??0}
+ localSave();render();
+}
+function hasRecords(d){return ['courses','payouts','expenses','collects','wallet'].some(k=>Array.isArray(d?.[k])&&d[k].length)}
+function mergeArrays(local,remote){
+ const out=[],seen=new Set();
+ for(const item of [...(Array.isArray(local)?local:[]),...(Array.isArray(remote)?remote:[])]){
+  const key=JSON.stringify(item);
+  if(!seen.has(key)){seen.add(key);out.push(item)}
+ }
+ return out;
+}
+function isSnapshot(d){return !!d&&typeof d==='object'&&['courses','payouts','expenses','collects','wallet'].some(k=>Array.isArray(d[k]))}
+async function readRemoteRows(){
+ const {data,error}=await sb.from('courierpilot_data').select('id,data,updated_at');
+ if(error)throw error;
+ return (data||[]).filter(r=>isSnapshot(r.data));
+}
+function mergeRemoteRows(rows){
+ const out={courses:[],payouts:[],expenses:[],collects:[],wallet:[],settings:null};
+ for(const k of ['courses','payouts','expenses','collects','wallet'])out[k]=mergeArrays([],rows.flatMap(r=>Array.isArray(r.data?.[k])?r.data[k]:[]));
+ const preferred=rows.find(r=>r.id==='shared')||rows.find(r=>r.id===SHARED_ID)||rows[0];
+ remoteRowIds=[...new Set(rows.map(r=>r.id).filter(Boolean))];
+ if(preferred&&!remoteRowIds.includes(preferred.id))remoteRowIds.push(preferred.id);
+ if(!remoteRowIds.length)remoteRowIds=[SHARED_ID];
+ const withSettings=[...rows].reverse().find(r=>r.data?.settings);
+ out.settings=withSettings?.data?.settings||null;
+ return out;
+}
+async function pushRemote(){
+ if(!signedIn||!sb||syncing||READ_ONLY)return;
+ syncing=true;
+ try{
+  const rows=await readRemoteRows();
+  if(rows.length)remoteRowIds=[...new Set(rows.map(r=>r.id))];
+  if(!remoteRowIds.length)remoteRowIds=[SHARED_ID];
+  const payload=snapshot();
+  const records=remoteRowIds.map(id=>({id,data:payload,updated_at:new Date().toISOString()}));
+  const {error}=await sb.from('courierpilot_data').upsert(records,{onConflict:'id'});
+  if(error)throw error;
+  setStatus('Synchronisé ✓ Les données sont sur Supabase.');
+ }catch(e){setStatus('Échec de synchronisation : '+e.message+'. Les données locales sont conservées.')}
+ finally{syncing=false}
+}
+async function pullRemote(){
+ if(!signedIn||!sb)return;
+ try{
+  const rows=await readRemoteRows();
+  if(READ_ONLY){
+   if(!rows.length){setStatus('Connecté en consultation. Aucune sauvegarde partagée trouvée.');return}
+   applySnapshot(mergeRemoteRows(rows));lockReadOnly();
+   setStatus('Consultation synchronisée ✓ Mise à jour automatique active.');
+   return;
   }
+  if(!rows.length){
+   remoteRowIds=[SHARED_ID];
+   if(hasRecords(state))await pushRemote();
+   else setStatus('Connecté. La base partagée est vide.');
+   return;
+  }
+  const remote=mergeRemoteRows(rows),local=snapshot(),merged={...remote};
+  for(const k of ['courses','payouts','expenses','collects','wallet'])merged[k]=mergeArrays(local[k],remote[k]);
+  merged.settings=local.settings||remote.settings;
+  applySnapshot(merged);
+  await pushRemote();
+  setStatus('Synchronisé ✓ Historique local et partagé réunis.');
+ }catch(e){setStatus('Lecture Supabase impossible : '+e.message+'. Données locales conservées.')}
+}
+$('signIn').onclick=async()=>{
+ if(!sb){setStatus('Connexion Supabase indisponible. Vérifie Internet.');return}
+ const email=$('authEmail').value.trim(),password=$('authPassword').value;
+ if(!email||!password){setStatus('Saisis l’e-mail et le mot de passe du compte partagé.');return}
+ $('signIn').disabled=true;setStatus('Connexion…');
+ try{
+  const {error}=await sb.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  authUI(true);await pullRemote();
+ }catch(e){setStatus('Connexion impossible : '+e.message)}
+ finally{$('signIn').disabled=false;if(READ_ONLY)lockReadOnly()}
+};
+$('signOut').onclick=async()=>{if(sb)await sb.auth.signOut();authUI(false)};
+if(READ_ONLY)lockReadOnly();
+
+setInterval(async()=>{
+ if(signedIn&&READ_ONLY&&!pollingRemote){
+  pollingRemote=true;
+  try{await pullRemote()}finally{pollingRemote=false}
+ }
+},10000);
+if(sb)sb.auth.getSession().then(async({data})=>{if(data.session){authUI(true);await pullRemote()}});
+
+function persist(){
+ if(READ_ONLY){setStatus('Mode consultation : aucune modification autorisée.');return}
+ localSave();render();if(signedIn)pushRemote();
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function dateValue(id){return $(id).value||today()}
 
 function render(){
-  const t=today(),w=weekStart(t);
-  const day=state.courses.filter(c=>c.date===t);
-  const week=state.courses.filter(c=>weekStart(c.date)===w);
-  const all=tab==='day'?day:tab==='week'?week:state.courses;
-  const g=gross(all),ded=g*(tax()+av());
-
-  $('todayGross').textContent=money(gross(day));
-  $('todayNet').textContent=money(gross(day)*(1-tax()-av()));
-  $('todayCount').textContent=day.length+' course(s)';
-  $('weekGross').textContent=money(gross(week));
-  $('weekNet').textContent=money(gross(week)*(1-tax()-av()));
-  $('weekCount').textContent=week.length+' course(s)';
-  $('periodCount').textContent=all.length;
-  $('periodGross').textContent=money(g);
-  $('periodTax').textContent='− '+money(ded);
-  $('periodNet').textContent=money(g-ded);
-
-  const cg=v('courseAmount')+v('tip');
-  $('courseGross').textContent=money(cg);
-  $('courseTax').textContent='− '+money(cg*(tax()+av()));
-  $('courseNet').textContent=money(cg*(1-tax()-av()));
-  $('expenseTotal').textContent=money(state.expenses.reduce((s,e)=>s+Number(e.amount||0),0));
-
-  const cd=dateValue('collectViewDate');
-  const wd=dateValue('walletViewDate');
-  const dayCollects=state.collects.filter(c=>c.date===cd);
-  const dayWallet=state.wallet.filter(e=>e.date===wd);
-
-  $('collectDayDue').textContent=money(dayCollects.reduce((s,c)=>s+Number(c.due||0),0));
-  $('collectDayReceived').textContent=money(dayCollects.reduce((s,c)=>s+Number(c.received||0),0));
-  $('collectAll').textContent=money(dayCollects.reduce((s,c)=>s+Number(c.received||0),0));
-  $('collectGrandTotal').textContent=money(state.collects.reduce((s,c)=>s+Number(c.received||0),0));
-  $('walletDayTotal').textContent=money(dayWallet.reduce((s,e)=>s+Number(e.amount||0),0));
-  $('walletAllTotal').textContent=money(state.wallet.reduce((s,e)=>s+Number(e.amount||0),0));
-
-  // L'historique des collectes affiche toutes les dates, pas uniquement celle sélectionnée.
-  const collectRows=state.collects.map((c,i)=>({...c,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-  $('collectHistory').innerHTML=collectRows.length?collectRows.map(c=>`
-    <div class="row">
-      <span><b>${esc(c.date)}</b><br>Demandé : ${money(c.due)} · Reçu : ${money(c.received)}<br>Écart : ${money(Math.max(0,Number(c.due||0)-Number(c.received||0)))}</span>
-      <button class="danger" data-delete-collect="${c._index}">Supprimer</button>
-    </div>`).join(''):'<div class="empty">Aucune collecte enregistrée.</div>';
-
-  // L'historique du portefeuille affiche toutes les dates, séparément des collectes.
-  const walletRows=state.wallet.map((e,i)=>({...e,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-  $('walletHistory').innerHTML=walletRows.length?walletRows.map(e=>`
-    <div class="row">
-      <span><b>${esc(e.date)}</b><br>Encaissement : ${money(e.amount)}</span>
-      <button class="danger" data-delete-wallet="${e._index}">Supprimer</button>
-    </div>`).join(''):'<div class="empty">Aucun encaissement enregistré.</div>';
-
-  const items=[
-    ...state.courses.map((c,i)=>({date:c.date,title:'Course · '+c.platform,detail:'Brut '+money(Number(c.amount||0)+Number(c.tip||0)),amount:Number(c.amount||0)+Number(c.tip||0),kind:'course',index:i})),
-    ...state.payouts.map((p,i)=>({date:p.date,title:'Virement net Avalon',detail:'Déjà net',amount:Number(p.amount||0),kind:'payout',index:i})),
-    ...state.expenses.map((e,i)=>({date:e.date,title:'Dépense · '+e.type,detail:'Dépense',amount:-Number(e.amount||0),kind:'expense',index:i})),
-    ...state.collects.map((c,i)=>({date:c.date,title:'Collecte client',detail:'Demandé '+money(c.due)+' · reçu '+money(c.received),amount:0,kind:'collect',index:i})),
-    ...state.wallet.map((e,i)=>({date:e.date,title:'Encaissement portefeuille Glovo',detail:'Suivi séparé',amount:0,kind:'wallet',index:i}))
-  ].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-
-  $('history').innerHTML=items.length?items.map(x=>`
-    <div class="row">
-      <span><b>${esc(x.title)}</b><br>${esc(x.date)} · ${esc(x.detail)}</span>
-      <span style="text-align:right">
-        <b class="${x.amount<0?'red':''}">${x.amount<0?'− ':''}${money(Math.abs(x.amount))}</b><br>
-        <button class="danger" data-delete-kind="${x.kind}" data-delete-index="${x.index}">Supprimer</button>
-      </span>
-    </div>`).join(''):'<div class="empty">Aucune opération pour le moment.</div>';
-
-  $('collectGap').textContent=money(Math.max(0,v('collectDue')-v('collectReceived')));
+ const t=today(),w=weekStart(t),day=state.courses.filter(c=>c.date===t),week=state.courses.filter(c=>weekStart(c.date)===w);
+ const all=tab==='day'?day:tab==='week'?week:state.courses,g=gross(all),ded=g*(tax()+av());
+ $('todayGross').textContent=money(gross(day));$('todayNet').textContent=money(gross(day)*(1-tax()-av()));$('todayCount').textContent=day.length+' course(s)';
+ $('weekGross').textContent=money(gross(week));$('weekNet').textContent=money(gross(week)*(1-tax()-av()));$('weekCount').textContent=week.length+' course(s)';
+ $('periodCount').textContent=all.length;$('periodGross').textContent=money(g);$('periodTax').textContent='− '+money(ded);$('periodNet').textContent=money(g-ded);
+ const cg=v('courseAmount')+v('tip');
+ $('courseGross').textContent=money(cg);$('courseTax').textContent='− '+money(cg*(tax()+av()));$('courseNet').textContent=money(cg*(1-tax()-av()));
+ $('expenseTotal').textContent=money(state.expenses.reduce((s,e)=>s+Number(e.amount||0),0));
+ const cd=dateValue('collectViewDate'),wd=dateValue('walletViewDate'),dc=state.collects.filter(c=>c.date===cd),dw=state.wallet.filter(e=>e.date===wd);
+ $('collectDayDue').textContent=money(dc.reduce((s,c)=>s+Number(c.due||0),0));
+ $('collectDayReceived').textContent=money(dc.reduce((s,c)=>s+Number(c.received||0),0));
+ $('collectAll').textContent=money(dc.reduce((s,c)=>s+Number(c.received||0),0));
+ $('collectGrandTotal').textContent=money(state.collects.reduce((s,c)=>s+Number(c.received||0),0));
+ $('walletDayTotal').textContent=money(dw.reduce((s,e)=>s+Number(e.amount||0),0));
+ $('walletAllTotal').textContent=money(state.wallet.reduce((s,e)=>s+Number(e.amount||0),0));
+ const cr=state.collects.map((c,i)=>({...c,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ $('collectHistory').innerHTML=cr.length?cr.map(c=>`<div class="row"><span><b>${esc(c.date)}</b><br>Demandé : ${money(c.due)} · Reçu : ${money(c.received)}<br>Écart : ${money(Math.max(0,Number(c.due||0)-Number(c.received||0)))}</span><button class="danger" data-delete-collect="${c._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucune collecte enregistrée.</div>';
+ const wr=state.wallet.map((e,i)=>({...e,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ $('walletHistory').innerHTML=wr.length?wr.map(e=>`<div class="row"><span><b>${esc(e.date)}</b><br>Encaissement : ${money(e.amount)}</span><button class="danger" data-delete-wallet="${e._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucun encaissement enregistré.</div>';
+ const items=[
+ ...state.courses.map((c,i)=>({date:c.date,title:'Course · '+c.platform,detail:'Brut '+money(Number(c.amount||0)+Number(c.tip||0)),amount:Number(c.amount||0)+Number(c.tip||0),kind:'course',index:i})),
+ ...state.payouts.map((p,i)=>({date:p.date,title:'Virement net Avalon',detail:'Déjà net',amount:Number(p.amount||0),kind:'payout',index:i})),
+ ...state.expenses.map((e,i)=>({date:e.date,title:'Dépense · '+e.type,detail:'Dépense',amount:-Number(e.amount||0),kind:'expense',index:i})),
+ ...state.collects.map((c,i)=>({date:c.date,title:'Collecte client',detail:'Demandé '+money(c.due)+' · reçu '+money(c.received),amount:0,kind:'collect',index:i})),
+ ...state.wallet.map((e,i)=>({date:e.date,title:'Encaissement portefeuille Glovo',detail:'Suivi séparé',amount:0,kind:'wallet',index:i}))
+ ].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ $('history').innerHTML=items.length?items.map(x=>`<div class="row"><span><b>${esc(x.title)}</b><br>${esc(x.date)} · ${esc(x.detail)}</span><span style="text-align:right"><b class="${x.amount<0?'red':''}">${x.amount<0?'− ':''}${money(Math.abs(x.amount))}</b><br><button class="danger" data-delete-kind="${x.kind}" data-delete-index="${x.index}">Supprimer</button></span></div>`).join(''):'<div class="empty">Aucune opération pour le moment.</div>';
+ $('collectGap').textContent=money(Math.max(0,v('collectDue')-v('collectReceived')));
 }
 
 $('addCourse').onclick=()=>{
-  const amount=v('courseAmount'),tip=v('tip');
-  if(amount+tip<=0)return alert('Saisis un montant de course.');
-  state.courses.push({date:dateValue('courseDate'),platform:$('platform').value,amount,tip});
-  persist();$('courseAmount').value='';$('tip').value='0';
+ const amount=v('courseAmount'),tip=v('tip');if(amount+tip<=0)return alert('Saisis un montant de course.');
+ state.courses.push({date:dateValue('courseDate'),platform:$('platform').value,amount,tip});
+ persist();$('courseAmount').value='';$('tip').value='0';
 };
 $('addCollect').onclick=()=>{
-  const due=v('collectDue'),received=v('collectReceived');
-  if(due<=0)return alert('Saisis le montant demandé.');
-  if(received>due)return alert('Le montant reçu ne peut pas dépasser le montant demandé.');
-  state.collects.push({date:dateValue('collectDate'),due,received});
-  persist();$('collectDue').value='';$('collectReceived').value='0';
+ const due=v('collectDue'),received=v('collectReceived');if(due<=0)return alert('Saisis le montant demandé.');
+ if(received>due)return alert('Le montant reçu ne peut pas dépasser le montant demandé.');
+ state.collects.push({date:dateValue('collectDate'),due,received});persist();$('collectDue').value='';$('collectReceived').value='0';
 };
-$('addWallet').onclick=()=>{
-  const amount=v('walletAmount');
-  if(amount<=0)return alert('Saisis le montant encaissé.');
-  state.wallet.push({date:dateValue('walletDate'),amount});
-  persist();$('walletAmount').value='';
-};
-$('addPayout').onclick=()=>{
-  const amount=v('payoutAmount');
-  if(amount<=0)return alert('Saisis le montant net reçu.');
-  state.payouts.push({date:dateValue('payoutDate'),amount});
-  persist();$('payoutAmount').value='';
-};
-$('addExpense').onclick=()=>{
-  const amount=v('expenseAmount');
-  if(amount<=0)return alert('Saisis le montant de la dépense.');
-  state.expenses.push({date:dateValue('expenseDate'),type:$('expenseType').value,amount});
-  persist();$('expenseAmount').value='';
-};
+$('addWallet').onclick=()=>{const amount=v('walletAmount');if(amount<=0)return alert('Saisis le montant encaissé.');state.wallet.push({date:dateValue('walletDate'),amount});persist();$('walletAmount').value=''};
+$('addPayout').onclick=()=>{const amount=v('payoutAmount');if(amount<=0)return alert('Saisis le montant net reçu.');state.payouts.push({date:dateValue('payoutDate'),amount});persist();$('payoutAmount').value=''};
+$('addExpense').onclick=()=>{const amount=v('expenseAmount');if(amount<=0)return alert('Saisis le montant de la dépense.');state.expenses.push({date:dateValue('expenseDate'),type:$('expenseType').value,amount});persist();$('expenseAmount').value=''};
 
 function deleteOperation(kind,index){
-  const map={course:'courses',payout:'payouts',expense:'expenses',collect:'collects',wallet:'wallet'};
-  const key=map[kind];
-  if(!key||!state[key][index])return;
-  const labels={course:'cette course',payout:'ce virement Avalon',expense:'cette dépense',collect:'cette collecte client',wallet:'cet encaissement du portefeuille'};
-  let message='Supprimer '+labels[kind]+' ?';
-  if(kind==='collect')message+='\n\nCela ne modifie pas les encaissements du portefeuille, qui sont enregistrés séparément.';
-  if(kind==='wallet')message+='\n\nCela ne modifie pas les collectes clients.';
-  if(!confirm(message))return;
-  state[key].splice(index,1);
-  persist();
+ if(READ_ONLY)return;
+ const map={course:'courses',payout:'payouts',expense:'expenses',collect:'collects',wallet:'wallet'},key=map[kind];
+ if(!key||!state[key][index])return;
+ if(!confirm('Supprimer cette opération ?'))return;
+ state[key].splice(index,1);persist();
 }
 document.addEventListener('click',e=>{
-  const c=e.target.closest('[data-delete-collect]');
-  if(c){deleteOperation('collect',Number(c.dataset.deleteCollect));return;}
-  const w=e.target.closest('[data-delete-wallet]');
-  if(w){deleteOperation('wallet',Number(w.dataset.deleteWallet));return;}
-  const b=e.target.closest('[data-delete-kind]');
-  if(b)deleteOperation(b.dataset.deleteKind,Number(b.dataset.deleteIndex));
+ const c=e.target.closest('[data-delete-collect]');if(c){deleteOperation('collect',Number(c.dataset.deleteCollect));return}
+ const w=e.target.closest('[data-delete-wallet]');if(w){deleteOperation('wallet',Number(w.dataset.deleteWallet));return}
+ const b=e.target.closest('[data-delete-kind]');if(b)deleteOperation(b.dataset.deleteKind,Number(b.dataset.deleteIndex));
 });
-
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
-  tab=b.dataset.tab;
-  document.querySelectorAll('[data-tab]').forEach(x=>x.className=x===b?'':'secondary');
-  render();
+ tab=b.dataset.tab;
+ document.querySelectorAll('[data-tab]').forEach(x=>x.className=x===b?'':'secondary');
+ render();
 });
 ['courseAmount','tip','taxRate','avalonRate','collectDue','collectReceived'].forEach(id=>$(id).addEventListener('input',render));
 ['collectViewDate','walletViewDate'].forEach(id=>$(id).addEventListener('change',render));
 
-// Export explicite en JSON.
 $('export').onclick=()=>{
-  const backup={
-    app:'CourierPilot',
-    version:2,
-    exportedAt:new Date().toISOString(),
-    courses:state.courses,
-    payouts:state.payouts,
-    expenses:state.expenses,
-    collects:state.collects,
-    wallet:state.wallet,
-    settings:{taxRate:v('taxRate'),avalonRate:v('avalonRate')}
-  };
-  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download='courierpilot-sauvegarde.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),2000);
+ const backup={app:'CourierPilot',version:3,exportedAt:new Date().toISOString(),...snapshot()};
+ const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='courierpilot-sauvegarde.json';document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),2000);
 };
-
-$('importBtn').onclick=()=>$('importFile').click();
+$('importBtn').onclick=()=>{if(!READ_ONLY)$('importFile').click()};
 $('importFile').onchange=async e=>{
-  const file=e.target.files&&e.target.files[0];
-  if(!file)return;
-  try{
-    const s=JSON.parse(await file.text());
-    for(const k of ['courses','payouts','expenses','collects','wallet']){
-      if(s[k]!==undefined&&!Array.isArray(s[k]))throw Error('Format invalide');
-    }
-    if(!confirm('Importer cette sauvegarde et remplacer les données actuellement affichées ?'))return;
-    state={
-      courses:Array.isArray(s.courses)?s.courses:[],
-      payouts:Array.isArray(s.payouts)?s.payouts:[],
-      expenses:Array.isArray(s.expenses)?s.expenses:[],
-      collects:Array.isArray(s.collects)?s.collects:[],
-      wallet:Array.isArray(s.wallet)?s.wallet:[]
-    };
-    if(s.settings){
-      $('taxRate').value=s.settings.taxRate??28.38;
-      $('avalonRate').value=s.settings.avalonRate??0;
-    }
-    persist();
-    alert('Sauvegarde JSON importée.');
-  }catch(err){
-    alert('Fichier invalide. Aucune donnée importée.');
-  }finally{
-    e.target.value='';
-  }
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ try{
+  const s=JSON.parse(await file.text());
+  for(const k of ['courses','payouts','expenses','collects','wallet'])if(s[k]!==undefined&&!Array.isArray(s[k]))throw Error('Format invalide');
+  if(!confirm('Importer cette sauvegarde et remplacer les données affichées ?'))return;
+  state={courses:s.courses||[],payouts:s.payouts||[],expenses:s.expenses||[],collects:s.collects||[],wallet:s.wallet||[]};
+  if(s.settings){$('taxRate').value=s.settings.taxRate??28.38;$('avalonRate').value=s.settings.avalonRate??0}
+  persist();alert('Sauvegarde importée.');
+ }catch(err){alert('Fichier invalide. Aucune donnée importée.')}
+ finally{e.target.value=''}
 };
-
 $('clear').onclick=()=>{
-  if(confirm('Effacer toutes les données locales ? Cette action est irréversible sans sauvegarde.')){
-    state={courses:[],payouts:[],expenses:[],collects:[],wallet:[]};
-    persist();
-  }
+ if(READ_ONLY)return;
+ if(confirm('Effacer toutes les données locales et synchronisées ? Cette action est irréversible sans sauvegarde.')){
+  state={courses:[],payouts:[],expenses:[],collects:[],wallet:[]};persist();
+ }
 };
-
+$('taxRate').addEventListener('change',()=>{if(READ_ONLY)return;render();if(signedIn)pushRemote()});
+$('avalonRate').addEventListener('change',()=>{if(READ_ONLY)return;render();if(signedIn)pushRemote()});
 render();
-</script>
-<script>
-if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'})
-      .then(reg=>reg.update())
-      .catch(()=>{});
-  });
-}
 </script>
 </body>
 </html>
