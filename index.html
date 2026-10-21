@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -56,7 +57,6 @@ button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
 <section class="card"><span class="sub">Net estimé cette semaine</span><div class="big green" id="weekNet">0,00 zł</div></section>
 
 <section class="card wide">
- <section class="card wide">
 <h2>💰 Bilan financier en temps réel</h2>
 <p class="note">Gains, dépenses et argent réellement encaissé. Les encaissements Glovo ne sont pas comptés deux fois dans les gains.</p>
 
@@ -84,6 +84,8 @@ button:disabled,input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
 <div class="row"><span>Total des virements Avalon</span><b id="financeAllPayouts">0,00 zł</b></div>
 <div class="row"><b>Virements Avalon moins dépenses</b><b id="financeAvailable">0,00 zł</b></div>
 </section>
+
+<section class="card wide">
 <h2>➕ Ajouter une course</h2>
 <div class="fields">
 <div><label>Date</label><input id="courseDate" type="date"></div>
@@ -316,25 +318,74 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function dateValue(id){return $(id).value||today()}
 
 function render(){
- const t=today(),w=weekStart(t),day=state.courses.filter(c=>c.date===t),week=state.courses.filter(c=>weekStart(c.date)===w);
- const all=tab==='day'?day:tab==='week'?week:state.courses,g=gross(all),ded=g*(tax()+av());
- $('todayGross').textContent=money(gross(day));$('todayNet').textContent=money(gross(day)*(1-tax()-av()));$('todayCount').textContent=day.length+' course(s)';
- $('weekGross').textContent=money(gross(week));$('weekNet').textContent=money(gross(week)*(1-tax()-av()));$('weekCount').textContent=week.length+' course(s)';
- $('periodCount').textContent=all.length;$('periodGross').textContent=money(g);$('periodTax').textContent='− '+money(ded);$('periodNet').textContent=money(g-ded);
+ const t=today(),w=weekStart(t),month=t.slice(0,7);
+ const day=state.courses.filter(c=>c.date===t);
+ const week=state.courses.filter(c=>c.date&&weekStart(c.date)===w);
+ const monthCourses=state.courses.filter(c=>String(c.date||'').slice(0,7)===month);
+ const all=tab==='day'?day:tab==='week'?week:state.courses;
+ const g=gross(all),ded=g*(tax()+av());
+ const sum=arr=>arr.reduce((s,x)=>s+Number(x.amount||0),0);
+ const net=arr=>gross(arr)*(1-tax()-av());
+ const weekExpenses=state.expenses.filter(e=>e.date&&weekStart(e.date)===w);
+ const monthExpenses=state.expenses.filter(e=>String(e.date||'').slice(0,7)===month);
+ const weekWallet=state.wallet.filter(e=>e.date&&weekStart(e.date)===w);
+ const monthWallet=state.wallet.filter(e=>String(e.date||'').slice(0,7)===month);
+ const weekPayouts=state.payouts.filter(p=>p.date&&weekStart(p.date)===w);
+ const monthPayouts=state.payouts.filter(p=>String(p.date||'').slice(0,7)===month);
+
+ $('todayGross').textContent=money(gross(day));
+ $('todayNet').textContent=money(net(day));
+ $('todayCount').textContent=day.length+' course(s)';
+ $('weekGross').textContent=money(gross(week));
+ $('weekNet').textContent=money(net(week));
+ $('weekCount').textContent=week.length+' course(s)';
+
+ $('periodCount').textContent=all.length;
+ $('periodGross').textContent=money(g);
+ $('periodTax').textContent='− '+money(ded);
+ $('periodNet').textContent=money(g-ded);
+
  const cg=v('courseAmount')+v('tip');
- $('courseGross').textContent=money(cg);$('courseTax').textContent='− '+money(cg*(tax()+av()));$('courseNet').textContent=money(cg*(1-tax()-av()));
- $('expenseTotal').textContent=money(state.expenses.reduce((s,e)=>s+Number(e.amount||0),0));
- const cd=dateValue('collectViewDate'),wd=dateValue('walletViewDate'),dc=state.collects.filter(c=>c.date===cd),dw=state.wallet.filter(e=>e.date===wd);
+ $('courseGross').textContent=money(cg);
+ $('courseTax').textContent='− '+money(cg*(tax()+av()));
+ $('courseNet').textContent=money(cg*(1-tax()-av()));
+ $('expenseTotal').textContent=money(sum(state.expenses));
+
+ const cd=dateValue('collectViewDate'),wd=dateValue('walletViewDate');
+ const dc=state.collects.filter(c=>c.date===cd),dw=state.wallet.filter(e=>e.date===wd);
  $('collectDayDue').textContent=money(dc.reduce((s,c)=>s+Number(c.due||0),0));
  $('collectDayReceived').textContent=money(dc.reduce((s,c)=>s+Number(c.received||0),0));
  $('collectAll').textContent=money(dc.reduce((s,c)=>s+Number(c.received||0),0));
  $('collectGrandTotal').textContent=money(state.collects.reduce((s,c)=>s+Number(c.received||0),0));
- $('walletDayTotal').textContent=money(dw.reduce((s,e)=>s+Number(e.amount||0),0));
- $('walletAllTotal').textContent=money(state.wallet.reduce((s,e)=>s+Number(e.amount||0),0));
+ $('walletDayTotal').textContent=money(sum(dw));
+ $('walletAllTotal').textContent=money(sum(state.wallet));
+
+ $('financeWeekGross').textContent=money(gross(week));
+ $('financeWeekTax').textContent='− '+money(gross(week)*(tax()+av()));
+ $('financeWeekNet').textContent=money(net(week));
+ $('financeWeekExpenses').textContent='− '+money(sum(weekExpenses));
+ $('financeWeekAfterExpenses').textContent=money(net(week)-sum(weekExpenses));
+ $('financeWeekWallet').textContent=money(sum(weekWallet));
+ $('financeWeekPayouts').textContent=money(sum(weekPayouts));
+
+ $('financeMonthGross').textContent=money(gross(monthCourses));
+ $('financeMonthNet').textContent=money(net(monthCourses));
+ $('financeMonthExpenses').textContent=money(sum(monthExpenses));
+ $('financeMonthWallet').textContent=money(sum(monthWallet));
+ $('financeMonthPayouts').textContent=money(sum(monthPayouts));
+
+ $('financeAllNet').textContent=money(net(state.courses));
+ $('financeAllExpenses').textContent=money(sum(state.expenses));
+ $('financeAllAfterExpenses').textContent=money(net(state.courses)-sum(state.expenses));
+ $('financeAllWallet').textContent=money(sum(state.wallet));
+ $('financeAllPayouts').textContent=money(sum(state.payouts));
+ $('financeAvailable').textContent=money(sum(state.payouts)-sum(state.expenses));
+
  const cr=state.collects.map((c,i)=>({...c,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
  $('collectHistory').innerHTML=cr.length?cr.map(c=>`<div class="row"><span><b>${esc(c.date)}</b><br>Demandé : ${money(c.due)} · Reçu : ${money(c.received)}<br>Écart : ${money(Math.max(0,Number(c.due||0)-Number(c.received||0)))}</span><button class="danger" data-delete-collect="${c._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucune collecte enregistrée.</div>';
  const wr=state.wallet.map((e,i)=>({...e,_index:i})).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
  $('walletHistory').innerHTML=wr.length?wr.map(e=>`<div class="row"><span><b>${esc(e.date)}</b><br>Encaissement : ${money(e.amount)}</span><button class="danger" data-delete-wallet="${e._index}">Supprimer</button></div>`).join(''):'<div class="empty">Aucun encaissement enregistré.</div>';
+
  const items=[
  ...state.courses.map((c,i)=>({date:c.date,title:'Course · '+c.platform,detail:'Brut '+money(Number(c.amount||0)+Number(c.tip||0)),amount:Number(c.amount||0)+Number(c.tip||0),kind:'course',index:i})),
  ...state.payouts.map((p,i)=>({date:p.date,title:'Virement net Avalon',detail:'Déjà net',amount:Number(p.amount||0),kind:'payout',index:i})),
